@@ -1,52 +1,11 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
-import type { Route } from './+types/map';
 import { useEffect, useRef } from 'react';
-import { useLoaderData, useNavigate } from 'react-router';
-import type {
-  MapCrimeRequestParams,
-  CrimeMapPoint,
-  GridCell,
-  MapDataResponse
-} from '~/types/crime';
+import type { GridCell, CrimeMapPoint, MapCrimeRequestParams } from '~/types/map';
 import type { FeatureCollection, Point } from 'geojson';
-import { getMapDataClient } from '~/services/crimeApi.client';
-
-// Default bounds for Ottawa
-const DEFAULT_BOUNDS = {
-  minLon: -75.75,
-  minLat: 45.35,
-  maxLon: -75.55,
-  maxLat: 45.45,
-  zoom: 12
-};
-
-// Loader function to fetch initial map data
-export async function loader({ request }: Route.LoaderArgs) {
-  const { getMapData } = await import('~/services/crimeApi.server');
-  const url = new URL(request.url);
-
-  console.log('Loader URL params:', url.searchParams.toString());
-
-  const params: MapCrimeRequestParams = {
-    minLon: Number(url.searchParams.get('minLon')) || DEFAULT_BOUNDS.minLon,
-    minLat: Number(url.searchParams.get('minLat')) || DEFAULT_BOUNDS.minLat,
-    maxLon: Number(url.searchParams.get('maxLon')) || DEFAULT_BOUNDS.maxLon,
-    maxLat: Number(url.searchParams.get('maxLat')) || DEFAULT_BOUNDS.maxLat,
-    zoom: Number(url.searchParams.get('zoom')) || DEFAULT_BOUNDS.zoom,
-    startDate: url.searchParams.get('startDate') ?? undefined,
-    endDate: url.searchParams.get('endDate') ?? undefined
-  };
-
-  try {
-    return await getMapData(params);
-  } catch (err: any) {
-    return {
-      type: 'POINTS',
-      data: [] as CrimeMapPoint[]
-    };
-  }
-}
+import { getMapData } from '~/services/mapApi';
+import type { CrimeDetail } from '~/types/crime';
+import { getCrimeDetails } from '~/services/crimeApi';
 
 export default function Map() {
   const mapContainerRef = useRef<HTMLDivElement>(null); // Ref to the map container div
@@ -56,11 +15,21 @@ export default function Map() {
   const lastBoundsRef = useRef<maplibregl.LngLatBounds | null>(null); // Ref to store the last known bounds
   const abortRef = useRef<AbortController | null>(null); // Ref to store the abort controller for fetch requests
 
-  const mapData = useLoaderData<MapDataResponse>(); // Map data loaded from the loader
-  console.log('Loaded crime points:', mapData);
+  const didInitialFetchRef = useRef(false); // Ref to track if the initial fetch has been done
 
   // Function to fetch map data based on current bounds and zoom
-  async function fetchMapData(bounds: maplibregl.LngLatBounds, zoom: number) {
+  async function fetchMapData(
+    bounds: maplibregl.LngLatBounds,
+    zoom: number,
+    force: boolean = false
+  ) {
+    if (!force && lastBoundsRef.current && !boundsChangedEnough(lastBoundsRef.current, bounds)) {
+      console.log('Bounds have not changed enough, skipping fetch');
+      return;
+    }
+
+    lastBoundsRef.current = bounds; // Update last bounds
+
     // Abort any ongoing request
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
@@ -76,34 +45,34 @@ export default function Map() {
     console.log('Fetching map data with params:', params);
 
     // Get response from the client-side API function
-    const response = await getMapDataClient(params, abortRef.current.signal);
+    const response = await getMapData(params, abortRef.current.signal);
 
     const map = mapRef.current;
     if (!map) return;
 
+    // Update map sources based on response type
     if (response.type === 'GRID') {
-      const cells = response.data;
+      getGeoJSONSource(map, 'crime-grids').setData(gridCellsToGeoJSON(response.data));
 
-      // Update grid source data
-      const gridSource = map.getSource('crime-grids') as maplibregl.GeoJSONSource;
-      gridSource.setData(gridCellsToGeoJSON(cells));
-
-      // Show grid layer, hide point layer
       map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
       map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
     }
 
     if (response.type === 'POINTS') {
-      const points = response.data;
+      getGeoJSONSource(map, 'crime-points').setData(crimePointsToGeoJSON(response.data));
 
-      // Update point source data
-      const pointSource = map.getSource('crime-points') as maplibregl.GeoJSONSource;
-      pointSource.setData(crimePointsToGeoJSON(points));
-
-      // Show point layer, hide grid layer
       map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
       map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
     }
+  }
+
+  async function handleCrimeClick(id: number): Promise<CrimeDetail> {
+    const details: CrimeDetail = await getCrimeDetails(id);
+
+    // For demonstration, just log the details
+    console.log('Crime details:', details);
+
+    return details;
   }
 
   // -------- Map Initialization --------
@@ -205,30 +174,42 @@ export default function Map() {
         type: 'circle',
         source: 'crime-points',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10,
+            4, // zoom 10 → small
+            12,
+            6,
+            14,
+            9,
+            16,
+            13 // zoom 16 → larger
+          ],
           'circle-color': '#ff0000'
         }
       });
 
-      if (mapData.type === 'GRID') {
-        const cells = mapData.data; // inferred as GridCell[]
+      map.on('click', 'crime-point-layer', (e) => {
+        if (!e.features || e.features.length === 0) return;
 
-        getGeoJSONSource(map, 'crime-grids').setData(gridCellsToGeoJSON(cells));
+        const feature = e.features[0];
 
-        map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
-        map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
-      }
+        const props = feature.properties;
+        const coords = (feature.geometry as GeoJSON.Point).coordinates;
 
-      if (mapData.type === 'POINTS') {
-        const points = mapData.data;
+        console.log('Clicked crime:', props);
 
-        getGeoJSONSource(map, 'crime-points').setData(crimePointsToGeoJSON(points));
-
-        map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
-        map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
-      }
+        // Example action
+        handleCrimeClick(props.id);
+      });
 
       mapReadyRef.current = true; // Mark the map as ready
+
+      // Initial fetch
+      fetchMapData(map.getBounds(), Math.floor(map.getZoom()), true);
+      didInitialFetchRef.current = true;
     });
 
     return () => map.remove(); // Clean up on unmount
@@ -240,12 +221,12 @@ export default function Map() {
     if (!map) return;
 
     const handleViewportChange = () => {
+      // Only fetch if the map is ready and initial fetch has been done
+      if (!didInitialFetchRef.current) return;
+
       const bounds = map.getBounds();
       const zoom = Math.floor(map.getZoom());
 
-      if (!boundsChangedEnough(lastBoundsRef.current, bounds)) return;
-
-      lastBoundsRef.current = bounds;
       fetchMapData(bounds, zoom);
     };
 
