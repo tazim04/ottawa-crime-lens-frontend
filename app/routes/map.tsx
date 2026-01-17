@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import type { GridCell, CrimeMapPoint, MapCrimeRequestParams } from '~/types/map';
 import type { FeatureCollection, Point } from 'geojson';
 import { getMapData } from '~/services/mapApi';
-import type { CrimeDetail } from '~/types/crime';
-import { getCrimeDetails } from '~/services/crimeApi';
+import type { CrimeDetail, GridStat } from '~/types/crime';
+import { getCrimeDetails, getGridCellStats } from '~/services/crimeApi';
 
 export default function Map() {
   const mapContainerRef = useRef<HTMLDivElement>(null); // Ref to the map container div
@@ -66,11 +66,13 @@ export default function Map() {
     }
   }
 
-  async function handleCrimeClick(id: number): Promise<CrimeDetail> {
+  async function handleCrimeClick(id: number, lat: number, lon: number): Promise<CrimeDetail> {
     const details: CrimeDetail = await getCrimeDetails(id);
+    const cellStats: GridStat = await getGridCellStats(lat, lon);
 
     // For demonstration, just log the details
     console.log('Crime details:', details);
+    console.log('Grid cell stats:', cellStats);
 
     return details;
   }
@@ -202,7 +204,7 @@ export default function Map() {
         console.log('Clicked crime:', props);
 
         // Example action
-        handleCrimeClick(props.id);
+        handleCrimeClick(props.id, coords[1], coords[0]);
       });
 
       mapReadyRef.current = true; // Mark the map as ready
