@@ -13,6 +13,7 @@ export interface MapDataRequestParams {
 export type MapDataType = 'GRID' | 'POINTS';
 
 export interface GridCell {
+  id: number;
   lon: number;
   lat: number;
   crimeCount: number;

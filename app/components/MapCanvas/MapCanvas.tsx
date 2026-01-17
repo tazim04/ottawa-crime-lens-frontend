@@ -11,7 +11,6 @@ type MapCanvasProps = {
 };
 
 export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps) {
-
   const GRID_COLOURS = {
     veryLow: '#052e16',
     low: '#22c55e',
@@ -58,6 +57,9 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
 
       map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
       map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
+
+      // Clear Grid highlight
+      map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
     }
   }
 
@@ -96,6 +98,7 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
     mapRef.current = map;
 
     map.on('load', () => {
+      // ----------- DATA SOURCES -----------
       // Source for crime points (closer zooms)
       map.addSource('crime-points', {
         type: 'geojson',
@@ -105,50 +108,61 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
       // Source for crime grids (farther zooms)
       map.addSource('crime-grids', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] }
+        data: { type: 'FeatureCollection', features: [] },
+        promoteId: 'id' // Use 'id' property for feature IDs
       });
 
+      // ----------- DATA LAYERS -----------
       // GRID LAYER
-map.addLayer({
-  id: 'crime-grid-layer',
-  type: 'circle',
-  source: 'crime-grids',
-  paint: {
-    // Fixed, intentional sizing (grid-like)
-'circle-radius': [
-  'interpolate',
-  ['linear'],
-  ['zoom'],
-  9,  7,
-  10, 8,
-  11, 12,
-  12, 14,
-  13, 16
-],
+      map.addLayer({
+        id: 'crime-grid-layer',
+        type: 'circle',
+        source: 'crime-grids',
+        paint: {
+          // Fixed, intentional sizing (grid-like)
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            9,
+            7,
+            10,
+            8,
+            11,
+            12,
+            12,
+            14,
+            13,
+            16
+          ],
 
-    'circle-color': [
-      'step',
-      ['get', 'crimeCount'],
-      GRID_COLOURS.veryLow,    // 0
-  50,  GRID_COLOURS.low, // low 
-  150, GRID_COLOURS.medium, // moderate 
-  400, GRID_COLOURS.high, // elevated
-  800, GRID_COLOURS.veryHigh, // high
-  1500,GRID_COLOURS.extreme  // critical
-    ],
+          'circle-color': [
+            'step',
+            ['get', 'crimeCount'],
+            GRID_COLOURS.veryLow, // 0
+            50,
+            GRID_COLOURS.low, // low
+            150,
+            GRID_COLOURS.medium, // moderate
+            400,
+            GRID_COLOURS.high, // elevated
+            800,
+            GRID_COLOURS.veryHigh, // high
+            1500,
+            GRID_COLOURS.extreme // critical
+          ],
 
-    // Solid, confident presence
-    'circle-opacity': 0.9,
+          // Solid, confident presence
+          'circle-opacity': 0.9,
 
-    // NO blur — sharp edges
-    'circle-blur': 0,
+          // NO blur — sharp edges
+          'circle-blur': 0,
 
-    // Optional: subtle stroke for clarity
-    'circle-stroke-width': 1,
-    'circle-stroke-color': '#000000'
-  }
-});
-
+          // Optional: subtle stroke for clarity
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#000000'
+        }
+      });
 
       // POINT LAYER
       map.addLayer({
@@ -174,6 +188,39 @@ map.addLayer({
         }
       });
 
+      // ----------- HIGHLIGHT LAYERS -----------
+      map.addLayer({
+        id: 'crime-point-highlight',
+        type: 'circle',
+        source: 'crime-points',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 8, 14, 14, 16, 18],
+          'circle-color': '#ffffff',
+          'circle-opacity': 0.9,
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#ef4444' // Tailwind red-500
+        },
+        filter: ['==', ['id'], -1] // nothing selected initially
+      });
+
+      map.addLayer(
+        {
+          id: 'crime-grid-highlight',
+          type: 'circle',
+          source: 'crime-grids',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 9, 11, 13, 13, 17],
+            'circle-color': 'rgba(0,0,0,0)',
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 1
+          },
+          filter: ['==', ['id'], -1]
+        },
+        'crime-point-layer'
+      );
+
+      // ----------- INTERACTIONS -----------
       map.on('mouseenter', 'crime-point-layer', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
@@ -194,18 +241,35 @@ map.addLayer({
         const feature = e.features[0];
         if (!feature) return;
 
+        const crimeId = feature.properties!.id;
         const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
         onCrimeClick(feature.properties!.id, lat, lon);
+
+        // Highlight crime
+        map.setFilter('crime-point-highlight', ['==', ['get', 'id'], crimeId]);
+
+        // Clear grid highlight
+        map.setFilter('crime-grid-highlight', ['==', ['get', 'id'], -1]);
       });
 
       map.on('click', 'crime-grid-layer', (e) => {
         if (!e.features || e.features.length === 0) return;
 
         const feature = e.features[0];
+        console.log('Grid feature clicked:', feature);
         if (!feature) return;
+        if (!feature.id) return;
 
         const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
         onGridClick(lat, lon);
+
+        console.log('Grid clicked:', feature.id);
+
+        // Highlight grid
+        map.setFilter('crime-grid-highlight', ['==', ['id'], feature.id]);
+
+        // Clear crime highlight
+        map.setFilter('crime-point-highlight', ['==', ['id'], -1]);
       });
 
       map.on('zoom', () => {
@@ -254,7 +318,7 @@ map.addLayer({
   return <div ref={mapContainerRef} style={{ width: '100vw', height: '100vh' }} />;
 }
 
-// Utils
+// ---------- Helper Functions --------
 
 export function crimePointsToGeoJSON(points: CrimeMapPoint[]): FeatureCollection<Point> {
   return {
@@ -275,15 +339,18 @@ export function crimePointsToGeoJSON(points: CrimeMapPoint[]): FeatureCollection
 }
 
 function gridCellsToGeoJSON(cells: GridCell[]): FeatureCollection<Point> {
+  console.log('Grid cells from backend:', cells);
   return {
     type: 'FeatureCollection',
     features: cells.map((c) => ({
       type: 'Feature',
+      id: c.id,
       geometry: {
         type: 'Point',
         coordinates: [c.lon, c.lat]
       },
       properties: {
+        id: c.id,
         crimeCount: c.crimeCount
       }
     }))
