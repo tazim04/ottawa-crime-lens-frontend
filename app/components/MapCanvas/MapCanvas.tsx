@@ -2,7 +2,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 import type { MapDataRequestParams } from '~/types/map';
-import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource } from './mapGeoJson';
+import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource } from './MapGeoJson';
 import type { FeatureCollection, Point } from 'geojson';
 
 import { getMapData } from '~/services/mapApi';

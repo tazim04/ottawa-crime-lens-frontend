@@ -6,6 +6,7 @@ import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
 import { getCrimeDetails, getGridCellStats } from '~/services/crimeApi';
 import { ClosePanelsButton } from '~/components/panels/ClosePanelsButton';
 import { useQuery } from '@tanstack/react-query';
+import SourceCodeDropdown from '~/components/SourceCodeDropdown/SourceCodeDropdown';
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -48,7 +49,18 @@ export default function Map() {
   }
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <MapCanvas onCrimeClick={handleCrimeClick} onGridClick={handleGridClick} selectedCrimeId={selectedCrimeId} selectedGridPoint={selectedGridPoint} />
+      <div className="absolute top-4 left-5 z-50 font-mono">
+        <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
+        <p className="text-stone-400">By Tazim Khan</p>
+        <SourceCodeDropdown />
+      </div>
+
+      <MapCanvas
+        onCrimeClick={handleCrimeClick}
+        onGridClick={handleGridClick}
+        selectedCrimeId={selectedCrimeId}
+        selectedGridPoint={selectedGridPoint}
+      />
 
       <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={!!selectedCrimeId} />
       <GridStatsPanel stats={gridStatsQuery.data ?? null} open={!!selectedGridPoint} />
