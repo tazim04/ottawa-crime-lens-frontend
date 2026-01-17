@@ -48,7 +48,7 @@ export default function Map() {
   }
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <MapCanvas onCrimeClick={handleCrimeClick} onGridClick={handleGridClick} />
+      <MapCanvas onCrimeClick={handleCrimeClick} onGridClick={handleGridClick} selectedCrimeId={selectedCrimeId} selectedGridPoint={selectedGridPoint} />
 
       <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={!!selectedCrimeId} />
       <GridStatsPanel stats={gridStatsQuery.data ?? null} open={!!selectedGridPoint} />

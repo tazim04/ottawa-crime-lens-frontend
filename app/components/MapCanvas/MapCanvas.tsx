@@ -1,16 +1,25 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
-import type { GridCell, CrimeMapPoint, MapDataRequestParams } from '~/types/map';
+import type { MapDataRequestParams } from '~/types/map';
+import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource } from './mapGeoJson';
 import type { FeatureCollection, Point } from 'geojson';
+
 import { getMapData } from '~/services/mapApi';
 
 type MapCanvasProps = {
   onCrimeClick: (id: number, lat: number, lon: number) => void;
   onGridClick: (lat: number, lon: number) => void;
+  selectedCrimeId: number | null;
+  selectedGridPoint: { lat: number; lon: number } | null;
 };
 
-export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps) {
+export default function MapCanvas({
+  onCrimeClick,
+  onGridClick,
+  selectedCrimeId,
+  selectedGridPoint
+}: MapCanvasProps) {
   const GRID_COLOURS = {
     veryLow: '#052e16',
     low: '#22c55e',
@@ -246,10 +255,10 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
         onCrimeClick(feature.properties!.id, lat, lon);
 
         // Highlight crime
-        map.setFilter('crime-point-highlight', ['==', ['get', 'id'], crimeId]);
+        map.setFilter('crime-point-highlight', ['==', ['id'], crimeId]);
 
         // Clear grid highlight
-        map.setFilter('crime-grid-highlight', ['==', ['get', 'id'], -1]);
+        map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
       });
 
       map.on('click', 'crime-grid-layer', (e) => {
@@ -315,52 +324,21 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
     };
   }, []);
 
+  // Clear highlights when clear selection
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current) return;
+
+    // Clear highlights when selection is cleared
+    if (selectedCrimeId === null) {
+      map.setFilter('crime-point-highlight', ['==', ['id'], -1]);
+    }
+
+    // Clear grid highlight when selection is cleared
+    if (selectedGridPoint === null) {
+      map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
+    }
+  }, [selectedCrimeId, selectedGridPoint]);
+
   return <div ref={mapContainerRef} style={{ width: '100vw', height: '100vh' }} />;
-}
-
-// ---------- Helper Functions --------
-
-export function crimePointsToGeoJSON(points: CrimeMapPoint[]): FeatureCollection<Point> {
-  return {
-    type: 'FeatureCollection',
-    features: points.map((p) => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [p.lon, p.lat]
-      },
-      properties: {
-        id: p.id,
-        category: p.category,
-        occurredDate: p.occurredDate
-      }
-    }))
-  };
-}
-
-function gridCellsToGeoJSON(cells: GridCell[]): FeatureCollection<Point> {
-  console.log('Grid cells from backend:', cells);
-  return {
-    type: 'FeatureCollection',
-    features: cells.map((c) => ({
-      type: 'Feature',
-      id: c.id,
-      geometry: {
-        type: 'Point',
-        coordinates: [c.lon, c.lat]
-      },
-      properties: {
-        id: c.id,
-        crimeCount: c.crimeCount
-      }
-    }))
-  };
-}
-
-function getGeoJSONSource(map: maplibregl.Map, id: string): maplibregl.GeoJSONSource {
-  const source = map.getSource(id);
-  if (!source) {
-    throw new Error(`Source ${id} not found`);
-  }
-  return source as maplibregl.GeoJSONSource;
 }
