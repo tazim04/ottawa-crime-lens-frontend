@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import type { Route } from './+types/map';
-import type { CrimeDetail, GridStat } from '~/types/crime';
 import MapCanvas from '~/components/MapCanvas/MapCanvas';
 import CrimeDetailsPanel from '~/components/panels/CrimeDetailsPanel/CrimeDetailsPanel';
 import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
 import { getCrimeDetails, getGridCellStats } from '~/services/crimeApi';
 import { ClosePanelsButton } from '~/components/panels/ClosePanelsButton';
+import { useQuery } from '@tanstack/react-query';
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -15,44 +15,47 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export default function Map() {
-  const [selectedCrime, setSelectedCrime] = useState<CrimeDetail | null>(null);
-  const [gridStats, setGridStats] = useState<GridStat | null>(null);
+  const [selectedCrimeId, setSelectedCrimeId] = useState<number | null>(null);
+  const [selectedGridPoint, setSelectedGridPoint] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
 
-  async function handleCrimeClick(id: number, lat: number, lon: number): Promise<void> {
-    const details: CrimeDetail = await getCrimeDetails(id);
-    const cellStats: GridStat = await getGridCellStats(lat, lon);
+  const crimeQuery = useQuery({
+    queryKey: ['crimeDetail', selectedCrimeId],
+    queryFn: () => getCrimeDetails(selectedCrimeId!),
+    enabled: selectedCrimeId !== null
+  });
 
-    // For demonstration, just log the details
-    console.log('Crime details:', details);
-    console.log('Grid cell stats:', cellStats);
+  const gridStatsQuery = useQuery({
+    queryKey: ['gridStats', selectedGridPoint?.lat, selectedGridPoint?.lon],
+    queryFn: () => getGridCellStats(selectedGridPoint!.lat, selectedGridPoint!.lon),
+    enabled: selectedGridPoint !== null
+  });
 
-    // Update parent state
-    setSelectedCrime(details);
-    setGridStats(cellStats);
+  function handleCrimeClick(id: number, lat: number, lon: number) {
+    setSelectedCrimeId(id);
+    setSelectedGridPoint({ lat, lon });
   }
 
-  async function handleGridClick(lat: number, lon: number): Promise<void> {
-    const cellStats: GridStat = await getGridCellStats(lat, lon);
-
-    setGridStats(cellStats);
-    setSelectedCrime(null);
+  function handleGridClick(lat: number, lon: number) {
+    setSelectedCrimeId(null);
+    setSelectedGridPoint({ lat, lon });
   }
 
   function clearSelection() {
-    setSelectedCrime(null);
-    setGridStats(null);
+    setSelectedCrimeId(null);
+    setSelectedGridPoint(null);
   }
-
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <MapCanvas onCrimeClick={handleCrimeClick} onGridClick={handleGridClick} />
 
-      <CrimeDetailsPanel crime={selectedCrime} open={!!selectedCrime} />
-      <GridStatsPanel stats={gridStats} open={!!gridStats} />
+      <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={!!selectedCrimeId} />
+      <GridStatsPanel stats={gridStatsQuery.data ?? null} open={!!selectedGridPoint} />
       <ClosePanelsButton
-        visible={!!selectedCrime || !!gridStats}
-        hasCrime={!!selectedCrime}
-        hasGrid={!!gridStats}
+        visible={!!selectedCrimeId || !!selectedGridPoint}
+        hasCrime={!!selectedCrimeId}
+        hasGrid={!!selectedGridPoint}
         onClear={clearSelection}
       />
     </div>

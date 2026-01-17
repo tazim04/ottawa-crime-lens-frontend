@@ -11,32 +11,24 @@ type MapCanvasProps = {
 };
 
 export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps) {
+
+  const GRID_COLOURS = {
+    veryLow: '#052e16',
+    low: '#22c55e',
+    medium: '#a3e635',
+    high: '#facc15',
+    veryHigh: '#f97316',
+    extreme: '#dc2626'
+  };
+
   const mapContainerRef = useRef<HTMLDivElement>(null); // Ref to the map container div
   const mapRef = useRef<maplibregl.Map | null>(null); // Ref to store the map instance
   const mapReadyRef = useRef(false); // Ref to track if the map is ready
-
-  const lastBoundsRef = useRef<maplibregl.LngLatBounds | null>(null); // Ref to store the last known bounds
-  const abortRef = useRef<AbortController | null>(null); // Ref to store the abort controller for fetch requests
-
   const didInitialFetchRef = useRef(false); // Ref to track if the initial fetch has been done
+  const lastGridGeoJsonRef = useRef<FeatureCollection<Point> | null>(null); // Ref to store last grid GeoJSON
 
   // Function to fetch map data based on current bounds and zoom
-  async function fetchMapData(
-    bounds: maplibregl.LngLatBounds,
-    zoom: number,
-    force: boolean = false
-  ) {
-    if (!force && lastBoundsRef.current && !boundsChangedEnough(lastBoundsRef.current, bounds)) {
-      console.log('Bounds have not changed enough, skipping fetch');
-      return;
-    }
-
-    lastBoundsRef.current = bounds; // Update last bounds
-
-    // Abort any ongoing request
-    if (abortRef.current) abortRef.current.abort();
-    abortRef.current = new AbortController();
-
+  async function fetchMapData(bounds: maplibregl.LngLatBounds, zoom: number, force = false) {
     const params: MapDataRequestParams = {
       minLon: bounds.getWest(),
       minLat: bounds.getSouth(),
@@ -45,17 +37,17 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
       zoom
     };
 
-    console.log('Fetching map data with params:', params);
-
-    // Get response from the client-side API function
-    const response = await getMapData(params, abortRef.current.signal);
+    const response = await getMapData(params);
 
     const map = mapRef.current;
     if (!map) return;
 
-    // Update map sources based on response type
     if (response.type === 'GRID') {
-      getGeoJSONSource(map, 'crime-grids').setData(gridCellsToGeoJSON(response.data));
+      const geojson = gridCellsToGeoJSON(response.data);
+
+      lastGridGeoJsonRef.current = geojson;
+
+      getGeoJSONSource(map, 'crime-grids').setData(geojson);
 
       map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
       map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
@@ -117,68 +109,43 @@ export default function MapCanvas({ onCrimeClick, onGridClick }: MapCanvasProps)
       });
 
       // GRID LAYER
-      map.addLayer({
-        id: 'crime-grid-layer',
-        type: 'heatmap',
-        source: 'crime-grids',
-        paint: {
-          'heatmap-weight': [
-            'interpolate',
-            ['linear'],
-            ['get', 'crimeCount'],
-            0,
-            0,
-            300,
-            0.6,
-            800,
-            1.2,
-            2000,
-            2.0
-          ],
-
-          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 9, 1.1, 12, 1.7],
-
-          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 9, 55, 11, 65, 13, 75, 15, 85],
-
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0.0,
-            'rgba(0,0,0,0)',
-            0.2,
-            '#ffffcc',
-            0.4,
-            '#ffeda0',
-            0.6,
-            '#feb24c',
-            0.8,
-            '#f03b20',
-            1.0,
-            '#bd0026'
-          ],
-
-          'heatmap-opacity': 0.7
-        }
-      });
-
-      // For capturing clicks on the grid layer
 map.addLayer({
-  id: 'crime-grid-hitbox',
+  id: 'crime-grid-layer',
   type: 'circle',
   source: 'crime-grids',
   paint: {
-    'circle-radius': [
-      'interpolate',
-      ['linear'],
+    // Fixed, intentional sizing (grid-like)
+'circle-radius': [
+  'interpolate',
+  ['linear'],
   ['zoom'],
-  9, 60,
-  10, 50,
-  11, 40,
-  12, 30,
-  13, 22
+  9,  7,
+  10, 8,
+  11, 12,
+  12, 14,
+  13, 16
 ],
-    'circle-opacity': 0
+
+    'circle-color': [
+      'step',
+      ['get', 'crimeCount'],
+      GRID_COLOURS.veryLow,    // 0
+  50,  GRID_COLOURS.low, // low 
+  150, GRID_COLOURS.medium, // moderate 
+  400, GRID_COLOURS.high, // elevated
+  800, GRID_COLOURS.veryHigh, // high
+  1500,GRID_COLOURS.extreme  // critical
+    ],
+
+    // Solid, confident presence
+    'circle-opacity': 0.9,
+
+    // NO blur — sharp edges
+    'circle-blur': 0,
+
+    // Optional: subtle stroke for clarity
+    'circle-stroke-width': 1,
+    'circle-stroke-color': '#000000'
   }
 });
 
@@ -214,10 +181,10 @@ map.addLayer({
         map.getCanvas().style.cursor = '';
       });
 
-      map.on('mouseenter', 'crime-grid-hitbox', () => {
+      map.on('mouseenter', 'crime-grid-layer', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
-      map.on('mouseleave', 'crime-grid-hitbox', () => {
+      map.on('mouseleave', 'crime-grid-layer', () => {
         map.getCanvas().style.cursor = '';
       });
 
@@ -231,7 +198,7 @@ map.addLayer({
         onCrimeClick(feature.properties!.id, lat, lon);
       });
 
-      map.on('click', 'crime-grid-hitbox', (e) => {
+      map.on('click', 'crime-grid-layer', (e) => {
         if (!e.features || e.features.length === 0) return;
 
         const feature = e.features[0];
@@ -239,6 +206,15 @@ map.addLayer({
 
         const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
         onGridClick(lat, lon);
+      });
+
+      map.on('zoom', () => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const geojson = lastGridGeoJsonRef.current;
+        if (!geojson) return;
+        getGeoJSONSource(map, 'crime-grids').setData(geojson);
       });
 
       mapReadyRef.current = true; // Mark the map as ready
@@ -320,18 +296,4 @@ function getGeoJSONSource(map: maplibregl.Map, id: string): maplibregl.GeoJSONSo
     throw new Error(`Source ${id} not found`);
   }
   return source as maplibregl.GeoJSONSource;
-}
-
-// Utility to determine if bounds have changed enough to warrant a new fetch
-function boundsChangedEnough(prev: maplibregl.LngLatBounds | null, next: maplibregl.LngLatBounds) {
-  if (!prev) return true; // Always fetch if no previous bounds
-
-  const threshold = 0.15; // 15% change threshold
-  const lngSpan = next.getEast() - next.getWest();
-  const latSpan = next.getNorth() - next.getSouth();
-
-  return (
-    Math.abs(next.getWest() - prev.getWest()) > lngSpan * threshold ||
-    Math.abs(next.getSouth() - prev.getSouth()) > latSpan * threshold
-  );
 }
