@@ -1,4 +1,4 @@
-export interface MapCrimeRequestParams {
+export interface MapDataRequestParams {
   minLon: number;
   minLat: number;
   maxLon: number;

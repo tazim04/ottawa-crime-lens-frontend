@@ -15,7 +15,11 @@ export async function getCrimeDetails(id: number, signal?: AbortSignal): Promise
   return res.json();
 }
 
-export async function getGridCellStats(lat: number, lon: number, signal?: AbortSignal): Promise<GridStat> {
+export async function getGridCellStats(
+  lat: number,
+  lon: number,
+  signal?: AbortSignal
+): Promise<GridStat> {
   const search = new URLSearchParams({
     lat: lat.toString(),
     lon: lon.toString()

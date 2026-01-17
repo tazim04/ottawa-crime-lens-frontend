@@ -1,3 +1,8 @@
+export enum CrimeSource {
+  OFFICIAL = 'OFFICIAL',
+  USER = 'USER'
+}
+
 export type CrimeDetail = {
   id: number;
   goNumber: string;
@@ -11,11 +16,6 @@ export type CrimeDetail = {
   reportedHour: number;
   source: CrimeSource;
 };
-
-export enum CrimeSource {
-  OFFICIAL = 'OFFICIAL',
-  USER = 'USER'
-}
 
 export type GridStatsRequestParams = {
   lon: number;

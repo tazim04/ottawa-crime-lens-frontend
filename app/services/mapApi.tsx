@@ -1,4 +1,4 @@
-import type { MapCrimeRequestParams } from '~/types/map';
+import type { MapDataRequestParams } from '~/types/map';
 import type { MapDataResponse } from '~/types/map';
 import { API_BASE_URL } from '~/config/env';
 
@@ -6,7 +6,7 @@ import { API_BASE_URL } from '~/config/env';
  * This file contains client-side functions to interact APIs that return map data (Grid and Points).
  */
 export async function getMapData(
-  params: MapCrimeRequestParams,
+  params: MapDataRequestParams,
   signal?: AbortSignal
 ): Promise<MapDataResponse> {
   const search = new URLSearchParams({
