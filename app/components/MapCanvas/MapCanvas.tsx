@@ -255,7 +255,7 @@ export default function MapCanvas({
         onCrimeClick(feature.properties!.id, lat, lon);
 
         // Highlight crime
-        map.setFilter('crime-point-highlight', ['==', ['id'], crimeId]);
+        map.setFilter('crime-point-highlight', ['==', ['get', 'id'], crimeId]);
 
         // Clear grid highlight
         map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
@@ -278,7 +278,7 @@ export default function MapCanvas({
         map.setFilter('crime-grid-highlight', ['==', ['id'], feature.id]);
 
         // Clear crime highlight
-        map.setFilter('crime-point-highlight', ['==', ['id'], -1]);
+        map.setFilter('crime-point-highlight', ['==', ['get', 'id'], -1]);
       });
 
       map.on('zoom', () => {
@@ -331,7 +331,7 @@ export default function MapCanvas({
 
     // Clear highlights when selection is cleared
     if (selectedCrimeId === null) {
-      map.setFilter('crime-point-highlight', ['==', ['id'], -1]);
+      map.setFilter('crime-point-highlight', ['==', ['get', 'id'], -1]);
     }
 
     // Clear grid highlight when selection is cleared
