@@ -9,12 +9,12 @@ export function ClosePanelsButton({ visible, hasCrime, hasGrid, onClear }: Close
   const positionClass = (() => {
     // Crime panel open
     if (hasCrime) {
-      return 'top-[1.5vh] right-[25.5rem]';
+      return 'top-[1.8vh] right-[25rem]';
     }
 
     // Only grid stats open
     if (hasGrid) {
-      return 'top-[50vh] right-[25.5rem]';
+      return 'top-[50vh] right-[25rem]';
     }
 
     return '';
