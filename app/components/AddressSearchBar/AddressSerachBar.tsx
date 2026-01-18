@@ -14,12 +14,14 @@ export default function AddressSearchBar({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // To manage results visibility
 
   useEffect(() => {
     // Minimum 3 characters to search
     if (query.length < 3) {
       setResults([]);
       setIsLoading(false);
+      setIsOpen(false); // Close results if query is too short
       return;
     }
 
@@ -33,6 +35,8 @@ export default function AddressSearchBar({
           `?format=json` +
           `&q=${encodeURIComponent(query)}` +
           `&addressdetails=1` +
+          `&namedetails=1` +
+          `&extratags=1` +
           `&limit=8` +
           `&countrycodes=ca` +
           `&viewbox=-76.4,45.8,-75.0,44.9` +
@@ -57,7 +61,7 @@ export default function AddressSearchBar({
       <div
         className="
         rounded-xl
-        bg-white/3
+        bg-white/6
         border border-white/10
         backdrop-blur
         shadow-lg
@@ -65,21 +69,49 @@ export default function AddressSearchBar({
         <input
           placeholder="Search address..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
           className="
             w-full
             bg-transparent
             px-4 py-3
             text-sm
             text-white
-            placeholder-neutral-500
+            placeholder-neutral-400
             outline-none
           "
         />
+
+        {/* Clear button */}
+        {query.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setResults([]);
+              setIsLoading(false);
+              setIsOpen(false);
+            }}
+            className="
+        absolute
+        right-5
+        top-1/2
+        -translate-y-1/2
+        text-neutral-400
+        hover:text-white
+        hover:cursor-pointer
+        transition
+      "
+            aria-label="Clear search">
+            X
+          </button>
+        )}
       </div>
 
       {/* Results */}
-      {results.length > 0 && (
+      {isOpen && (isLoading || results.length > 0) && (
         <ul
           className="
           mt-2
@@ -102,6 +134,7 @@ export default function AddressSearchBar({
                   onSelect(Number(r.lat), Number(r.lon));
                   setResults([]);
                   setQuery(r.display_name);
+                  setIsOpen(false); // Close results on selection
                 }}
                 className="
                 cursor-pointer
