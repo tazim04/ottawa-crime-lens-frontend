@@ -2,7 +2,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import type { MapDataRequestParams } from '~/types/map';
-import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource } from './MapGeoJson';
+import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource, mergeGridGeoJSON } from './MapGeoJson';
 import type { FeatureCollection, Point } from 'geojson';
 
 import { getMapData } from '~/services/mapApi';
@@ -13,13 +13,13 @@ export type MapCanvasRef = {
 
 type MapCanvasProps = {
   onCrimeClick: (id: number, lat: number, lon: number) => void;
-  onGridClick: (lat: number, lon: number) => void;
+  onGridClick: (gridId: number, lat: number, lon: number) => void;
   selectedCrimeId: number | null;
-  selectedGridPoint: { lat: number; lon: number } | null;
+  selectedGridId: number | null;
 };
 
 const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
-  ({ onCrimeClick, onGridClick, selectedCrimeId, selectedGridPoint }, ref) => {
+  ({ onCrimeClick, onGridClick, selectedCrimeId, selectedGridId }, ref) => {
     const GRID_COLOURS = {
       veryLow: '#052e16',
       low: '#22c55e',
@@ -65,13 +65,17 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
       if (!map) return;
 
       if (response.type === 'GRID') {
-        const geojson = gridCellsToGeoJSON(response.data);
+        const incomingGeojson = gridCellsToGeoJSON(response.data);
 
-        lastGridGeoJsonRef.current = geojson;
+        // Merge with existing grid data to preserve features
+        const merged = mergeGridGeoJSON(lastGridGeoJsonRef.current, incomingGeojson);
 
-        getGeoJSONSource(map, 'crime-grids').setData(geojson);
+        lastGridGeoJsonRef.current = merged;
+        getGeoJSONSource(map, 'crime-grids').setData(merged);
 
         map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
+        map.setLayoutProperty('crime-grid-highlight', 'visibility', 'visible');
+
         map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
       }
 
@@ -81,8 +85,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
         map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
         map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
 
-        // Clear Grid highlight
-        map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
+        map.setLayoutProperty('crime-grid-highlight', 'visibility', 'none');
       }
     }
 
@@ -156,6 +159,8 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
               12,
               14,
               13,
+              16,
+              18,
               16
             ],
 
@@ -284,7 +289,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           if (!feature.id) return;
 
           const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
-          onGridClick(lat, lon);
+          onGridClick(feature.id as number, lat, lon);
 
           console.log('Grid clicked:', feature.id);
 
@@ -293,15 +298,6 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
           // Clear crime highlight
           map.setFilter('crime-point-highlight', ['==', ['get', 'id'], -1]);
-        });
-
-        map.on('zoom', () => {
-          const map = mapRef.current;
-          if (!map) return;
-
-          const geojson = lastGridGeoJsonRef.current;
-          if (!geojson) return;
-          getGeoJSONSource(map, 'crime-grids').setData(geojson);
         });
 
         mapReadyRef.current = true; // Mark the map as ready
@@ -349,10 +345,22 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
       }
 
       // Clear grid highlight when selection is cleared
-      if (selectedGridPoint === null) {
+      if (selectedGridId === null) {
         map.setFilter('crime-grid-highlight', ['==', ['id'], -1]);
       }
-    }, [selectedCrimeId, selectedGridPoint]);
+    }, [selectedCrimeId, selectedGridId]);
+
+    // Update grid highlight when selectedGridId changes
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !mapReadyRef.current) return;
+
+      const gridVisible = map.getLayoutProperty('crime-grid-layer', 'visibility') === 'visible';
+
+      if (!gridVisible) return;
+
+      map.setFilter('crime-grid-highlight', ['==', ['id'], selectedGridId ?? -1]);
+    }, [selectedGridId]);
 
     return <div ref={mapContainerRef} style={{ width: '100vw', height: '100vh' }} />;
   }

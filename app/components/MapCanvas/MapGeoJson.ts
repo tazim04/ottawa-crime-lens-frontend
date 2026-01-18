@@ -1,7 +1,7 @@
 // ---------- Helper Functions --------
 
 import type { CrimeMapPoint, GridCell } from '~/types/map';
-import type { FeatureCollection, Point } from 'geojson';
+import type { Feature, FeatureCollection, Point } from 'geojson';
 
 export function crimePointsToGeoJSON(points: CrimeMapPoint[]): FeatureCollection<Point> {
   return {
@@ -46,4 +46,29 @@ export function getGeoJSONSource(map: maplibregl.Map, id: string): maplibregl.Ge
     throw new Error(`Source ${id} not found`);
   }
   return source as maplibregl.GeoJSONSource;
+}
+
+// Merges two GeoJSON FeatureCollections of Points, preserving existing features and adding new ones
+export function mergeGridGeoJSON(
+  oldFC: FeatureCollection<Point> | null,
+  newFC: FeatureCollection<Point>
+): FeatureCollection<Point> {
+  if (!oldFC) return newFC;
+
+  const map = new Map<string | number, Feature<Point>>();
+
+  // Preserve existing features
+  for (const f of oldFC.features) {
+    if (f.id != null) map.set(f.id, f);
+  }
+
+  // Add / overwrite with new features
+  for (const f of newFC.features) {
+    if (f.id != null) map.set(f.id, f);
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features: Array.from(map.values())
+  };
 }

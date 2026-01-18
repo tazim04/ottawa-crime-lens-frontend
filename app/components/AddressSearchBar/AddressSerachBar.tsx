@@ -4,6 +4,21 @@ type NominatimResult = {
   display_name: string;
   lat: string;
   lon: string;
+  name?: string;
+  namedetails?: {
+    name?: string;
+  };
+  address?: {
+    house_number?: string;
+    road?: string;
+    neighbourhood?: string;
+    suburb?: string;
+    city?: string;
+    town?: string;
+    municipality?: string;
+    state?: string;
+    postcode?: string;
+  };
 };
 
 export default function AddressSearchBar({
@@ -15,6 +30,33 @@ export default function AddressSearchBar({
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // To manage results visibility
+
+  // Helper to format address display
+  function formatAddress(r: NominatimResult): string {
+    const name = r.namedetails?.name || r.name;
+    const a = r.address;
+
+    const street = [a?.house_number, a?.road].filter(Boolean).join(' ');
+    const city = a?.city || a?.town || a?.municipality;
+
+    // POI + address
+    if (name && street) {
+      return [name, street, city].filter(Boolean).join(', ');
+    }
+
+    // Street-only result
+    if (street) {
+      return [street, city].filter(Boolean).join(', ');
+    }
+
+    // POI-only fallback
+    if (name) {
+      return city ? `${name}, ${city}` : name;
+    }
+
+    // Last-resort fallback
+    return r.display_name;
+  }
 
   useEffect(() => {
     // Minimum 3 characters to search
@@ -76,7 +118,7 @@ export default function AddressSearchBar({
           className="
             w-full
             bg-transparent
-            px-4 py-3
+            ps-4 pe-11 py-3
             text-sm
             text-white
             placeholder-neutral-400
@@ -133,7 +175,7 @@ export default function AddressSearchBar({
                 onClick={() => {
                   onSelect(Number(r.lat), Number(r.lon));
                   setResults([]);
-                  setQuery(r.display_name);
+                  setQuery(formatAddress(r));
                   setIsOpen(false); // Close results on selection
                 }}
                 className="

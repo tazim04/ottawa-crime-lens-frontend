@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Route } from './+types/map';
 import CrimeDetailsPanel from '~/components/panels/CrimeDetailsPanel/CrimeDetailsPanel';
 import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
@@ -22,6 +22,7 @@ export default function Map() {
   const [selectedGridPoint, setSelectedGridPoint] = useState<{ lat: number; lon: number } | null>(
     null
   );
+  const [selectedGridId, setSelectedGridId] = useState<number | null>(null); // used for highlighting grid on map
 
   // Ref to control the MapCanvas component - used for flying to addresses
   const mapRef = useRef<MapCanvasRef>(null);
@@ -35,34 +36,57 @@ export default function Map() {
   const gridStatsQuery = useQuery({
     queryKey: ['gridStats', selectedGridPoint?.lat, selectedGridPoint?.lon],
     queryFn: () => getGridCellStats(selectedGridPoint!.lat, selectedGridPoint!.lon),
-    enabled: selectedGridPoint !== null
+    enabled: selectedGridPoint !== null // Only fetch when a grid point is selected
   });
 
-  function handleCrimeClick(id: number, lat: number, lon: number) {
-    setSelectedCrimeId(id);
+  // When grid stats are fetched, update the selectedGridId
+  useEffect(() => {
+    if (gridStatsQuery.data?.id != null) {
+      setSelectedGridId(gridStatsQuery.data.id);
+    }
+  }, [gridStatsQuery.data]);
+
+  // ------ Handlers for map interactions ------
+
+  function handleCrimeClick(crimeId: number, lat: number, lon: number, gridId?: number) {
+    setSelectedCrimeId(crimeId);
     setSelectedGridPoint({ lat, lon });
+    if (gridId != null) setSelectedGridId(gridId);
   }
 
-  function handleGridClick(lat: number, lon: number) {
+  function handleGridClick(gridId: number, lat: number, lon: number) {
     setSelectedCrimeId(null);
     setSelectedGridPoint({ lat, lon });
+    setSelectedGridId(gridId);
   }
 
   function clearSelection() {
     setSelectedCrimeId(null);
     setSelectedGridPoint(null);
+    setSelectedGridId(null);
   }
 
   function fetchGridStats(lat: number, lon: number) {
     setSelectedCrimeId(null);
     setSelectedGridPoint({ lat, lon });
+    setSelectedGridId(null);
   }
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <div className="absolute top-4 left-5 z-50 font-mono">
         <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
-        <p className="text-stone-400">By Tazim Khan</p>
+        <a
+          className="text-stone-400"
+          href="https://tazim04.github.io/personal-website/"
+          target="_blank"
+          rel="noopener noreferrer">
+          By{' '}
+          <span className="hover:cursor-pointer underline underline-offset-4 hover:text-white">
+            Tazim Khan
+          </span>
+        </a>
+        <br />
         <SourceCodeDropdown />
       </div>
 
@@ -79,7 +103,7 @@ export default function Map() {
         onCrimeClick={handleCrimeClick}
         onGridClick={handleGridClick}
         selectedCrimeId={selectedCrimeId}
-        selectedGridPoint={selectedGridPoint}
+        selectedGridId={selectedGridId}
       />
 
       <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={!!selectedCrimeId} />
