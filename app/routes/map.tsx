@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Route } from './+types/map';
-import MapCanvas from '~/components/MapCanvas/MapCanvas';
 import CrimeDetailsPanel from '~/components/panels/CrimeDetailsPanel/CrimeDetailsPanel';
 import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
 import { getCrimeDetails, getGridCellStats } from '~/services/crimeApi';
 import { ClosePanelsButton } from '~/components/panels/ClosePanelsButton';
 import { useQuery } from '@tanstack/react-query';
 import SourceCodeDropdown from '~/components/SourceCodeDropdown/SourceCodeDropdown';
+import MapCanvas from '~/components/MapCanvas/MapCanvas';
+import type { MapCanvasRef } from '~/components/MapCanvas/MapCanvas';
+import AddressSearchBar from '~/components/AddressSearchBar/AddressSerachBar';
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -20,6 +22,9 @@ export default function Map() {
   const [selectedGridPoint, setSelectedGridPoint] = useState<{ lat: number; lon: number } | null>(
     null
   );
+
+  // Ref to control the MapCanvas component - used for flying to addresses
+  const mapRef = useRef<MapCanvasRef>(null);
 
   const crimeQuery = useQuery({
     queryKey: ['crimeDetail', selectedCrimeId],
@@ -47,6 +52,12 @@ export default function Map() {
     setSelectedCrimeId(null);
     setSelectedGridPoint(null);
   }
+
+  function fetchGridStats(lat: number, lon: number) {
+    setSelectedCrimeId(null);
+    setSelectedGridPoint({ lat, lon });
+  }
+
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <div className="absolute top-4 left-5 z-50 font-mono">
@@ -55,7 +66,16 @@ export default function Map() {
         <SourceCodeDropdown />
       </div>
 
+      <AddressSearchBar
+        onSelect={(lat, lon) => {
+          mapRef.current?.flyTo(lat, lon, 14);
+
+          fetchGridStats(lat, lon);
+        }}
+      />
+
       <MapCanvas
+        ref={mapRef}
         onCrimeClick={handleCrimeClick}
         onGridClick={handleGridClick}
         selectedCrimeId={selectedCrimeId}
