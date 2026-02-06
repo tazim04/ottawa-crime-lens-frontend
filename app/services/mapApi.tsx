@@ -14,11 +14,15 @@ export async function getMapData(
     minLat: params.minLat.toString(),
     maxLon: params.maxLon.toString(),
     maxLat: params.maxLat.toString(),
-    zoom: params.zoom.toString()
+    zoom: params.zoom.toString(),
+    startDate: params.startDate || '',
+    endDate: params.endDate || ''
   });
 
   if (params.startDate) search.set('startDate', params.startDate);
   if (params.endDate) search.set('endDate', params.endDate);
+
+  console.log('Fetching map data with params:', search.toString());
 
   const res = await fetch(`${API_BASE_URL}/map/data?${search}`, { signal });
 

@@ -104,7 +104,7 @@ export default function AddressSearchBar({
         className="
         rounded-xl
         bg-white/6
-        border border-white/10
+        border border-white/20
         backdrop-blur
         shadow-lg
       ">
@@ -143,11 +143,13 @@ export default function AddressSearchBar({
         -translate-y-1/2
         text-neutral-400
         hover:text-white
-        hover:cursor-pointer
+        hover:bg-white/5
+        p-1
+        rounded
         transition
       "
             aria-label="Clear search">
-            X
+            ✕
           </button>
         )}
       </div>

@@ -15,7 +15,17 @@ export async function getCrimeDetails(id: number, signal?: AbortSignal): Promise
   return res.json();
 }
 
-export async function getGridCellStats(
+export async function getGridStatsById(gridId: number, signal?: AbortSignal): Promise<GridStat> {
+  const res = await fetch(`${API_BASE_URL}/crime/grid/${gridId}/stats`, { signal });
+
+  if (!res.ok) {
+    throw new Error(`Grid stats API failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getGridStatsByPoint(
   lat: number,
   lon: number,
   signal?: AbortSignal
@@ -25,10 +35,10 @@ export async function getGridCellStats(
     lon: lon.toString()
   });
 
-  const res = await fetch(`${API_BASE_URL}/crime/grid-stats?${search}`, { signal });
+  const res = await fetch(`${API_BASE_URL}/crime/grid/stats?${search}`, { signal });
 
   if (!res.ok) {
-    throw new Error(`Crime Grid Stats API failed: ${res.status}`);
+    throw new Error(`Grid lookup API failed: ${res.status}`);
   }
 
   return res.json();

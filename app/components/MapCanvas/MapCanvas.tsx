@@ -1,11 +1,18 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import type { MapDataRequestParams } from '~/types/map';
-import { crimePointsToGeoJSON, gridCellsToGeoJSON, getGeoJSONSource, mergeGridGeoJSON } from './MapGeoJson';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
+import type { MapDataRequestParams, MapDataType } from '~/types/map';
+import {
+  crimePointsToGeoJSON,
+  gridCellsToGeoJSON,
+  getGeoJSONSource,
+  mergeGridGeoJSON
+} from './MapGeoJson';
 import type { FeatureCollection, Point } from 'geojson';
+import { CrimePointsCache } from './crimePointsCache';
 
 import { getMapData } from '~/services/mapApi';
+import type { CrimeDateFilter } from '~/types/filters';
 
 export type MapCanvasRef = {
   flyTo: (lat: number, lon: number, zoom?: number) => void;
@@ -16,10 +23,15 @@ type MapCanvasProps = {
   onGridClick: (gridId: number, lat: number, lon: number) => void;
   selectedCrimeId: number | null;
   selectedGridId: number | null;
+  dateFilter?: CrimeDateFilter;
+  onModeChange?: (mode: MapDataType) => void;
 };
 
 const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
-  ({ onCrimeClick, onGridClick, selectedCrimeId, selectedGridId }, ref) => {
+  (
+    { onCrimeClick, onGridClick, selectedCrimeId, selectedGridId, dateFilter, onModeChange },
+    ref
+  ) => {
     const GRID_COLOURS = {
       veryLow: '#052e16',
       low: '#22c55e',
@@ -29,11 +41,18 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
       extreme: '#dc2626'
     };
 
+    const POINTS_MODE_ZOOM = 12;
+
+    const TILE_SIZE = 0.01; // ~1.1km latitude, for simple grid tiling in cache keys
+    const crimePointCacheRef = useRef(new CrimePointsCache(TILE_SIZE)); // Cache instance for crime points
+
     const mapContainerRef = useRef<HTMLDivElement>(null); // Ref to the map container div
     const mapRef = useRef<maplibregl.Map | null>(null); // Ref to store the map instance
     const mapReadyRef = useRef(false); // Ref to track if the map is ready
     const didInitialFetchRef = useRef(false); // Ref to track if the initial fetch has been done
     const lastGridGeoJsonRef = useRef<FeatureCollection<Point> | null>(null); // Ref to store last grid GeoJSON
+    const isProgrammaticFetchRef = useRef(false); // Ref to avoid fetch loops on programmatic moves
+    const currentModeRef = useRef<MapDataType | null>(null); // Ref to track current map mode (GRID or POINTS)
 
     // Expose flyTo method to parent components - allows external control of the map
     useImperativeHandle(ref, () => ({
@@ -49,45 +68,93 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
       }
     }));
 
-    // Function to fetch map data based on current bounds and zoom
-    async function fetchMapData(bounds: maplibregl.LngLatBounds, zoom: number, force = false) {
-      const params: MapDataRequestParams = {
-        minLon: bounds.getWest(),
-        minLat: bounds.getSouth(),
-        maxLon: bounds.getEast(),
-        maxLat: bounds.getNorth(),
-        zoom
-      };
-
-      const response = await getMapData(params);
-
-      const map = mapRef.current;
-      if (!map) return;
-
-      if (response.type === 'GRID') {
-        const incomingGeojson = gridCellsToGeoJSON(response.data);
-
-        // Merge with existing grid data to preserve features
-        const merged = mergeGridGeoJSON(lastGridGeoJsonRef.current, incomingGeojson);
-
-        lastGridGeoJsonRef.current = merged;
-        getGeoJSONSource(map, 'crime-grids').setData(merged);
-
-        map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
-        map.setLayoutProperty('crime-grid-highlight', 'visibility', 'visible');
-
-        map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
-      }
-
-      if (response.type === 'POINTS') {
-        getGeoJSONSource(map, 'crime-points').setData(crimePointsToGeoJSON(response.data));
-
-        map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
-        map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
-
-        map.setLayoutProperty('crime-grid-highlight', 'visibility', 'none');
-      }
+    // Helper to determine current map mode based on zoom level
+    function getMapMode(zoom: number): MapDataType {
+      return zoom >= POINTS_MODE_ZOOM ? 'POINTS' : 'GRID';
     }
+
+    // Function to fetch map data based on current bounds and zoom
+    const fetchMapData = useCallback(
+      async (bounds: maplibregl.LngLatBounds, zoom: number) => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const mode = getMapMode(zoom);
+        const cache = crimePointCacheRef.current;
+
+        // ---------- POINTS CACHE SHORT-CIRCUIT ----------
+        if (mode === 'POINTS') {
+          const cacheKey = crimePointCacheRef.current.makeKey(bounds, zoom);
+
+          if (cache.has(cacheKey)) {
+            const cached = cache.get(cacheKey)!;
+            getGeoJSONSource(map, 'crime-points').setData(cached);
+
+            map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
+            map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
+            map.setLayoutProperty('crime-grid-highlight', 'visibility', 'none');
+
+            return; // NO BACKEND CALL
+          }
+        }
+
+        // ---------- BACKEND FETCH (no cache, write to cache) ----------
+        isProgrammaticFetchRef.current = true;
+
+        const params: MapDataRequestParams = {
+          minLon: bounds.getWest(),
+          minLat: bounds.getSouth(),
+          maxLon: bounds.getEast(),
+          maxLat: bounds.getNorth(),
+          zoom
+        };
+
+        if (dateFilter?.startDate) params.startDate = dateFilter.startDate;
+        if (dateFilter?.endDate) params.endDate = dateFilter.endDate;
+
+        const response = await getMapData(params);
+
+        isProgrammaticFetchRef.current = false;
+
+        // ---------- HANDLE RESPONSE ----------
+        if (response.type === 'POINTS') {
+          const cacheKey = cache.makeKey(bounds, zoom);
+          const geojson = crimePointsToGeoJSON(response.data);
+
+          cache.set(cacheKey, geojson); // Write to cache
+
+          getGeoJSONSource(map, 'crime-points').setData(geojson);
+
+          map.setLayoutProperty('crime-grid-layer', 'visibility', 'none');
+          map.setLayoutProperty('crime-point-layer', 'visibility', 'visible');
+          map.setLayoutProperty('crime-grid-highlight', 'visibility', 'none');
+        }
+
+        if (response.type === 'GRID') {
+          const incomingGeojson = gridCellsToGeoJSON(response.data);
+          const merged = mergeGridGeoJSON(lastGridGeoJsonRef.current, incomingGeojson);
+
+          lastGridGeoJsonRef.current = merged;
+          getGeoJSONSource(map, 'crime-grids').setData(merged);
+
+          map.setLayoutProperty('crime-grid-layer', 'visibility', 'visible');
+          map.setLayoutProperty('crime-grid-highlight', 'visibility', 'visible');
+          map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
+        }
+      },
+      [dateFilter]
+    );
+
+    // Function to fetch map data for the current viewport
+    const fetchForCurrentViewport = useCallback(() => {
+      const map = mapRef.current;
+      if (!map || !mapReadyRef.current) return;
+
+      const bounds = map.getBounds();
+      const zoom = Math.floor(map.getZoom());
+
+      fetchMapData(bounds, zoom);
+    }, [fetchMapData]);
 
     // -------- Map Initialization --------
     useEffect(() => {
@@ -284,14 +351,11 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           if (!e.features || e.features.length === 0) return;
 
           const feature = e.features[0];
-          console.log('Grid feature clicked:', feature);
           if (!feature) return;
           if (!feature.id) return;
 
           const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
           onGridClick(feature.id as number, lat, lon);
-
-          console.log('Grid clicked:', feature.id);
 
           // Highlight grid
           map.setFilter('crime-grid-highlight', ['==', ['id'], feature.id]);
@@ -303,26 +367,34 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
         mapReadyRef.current = true; // Mark the map as ready
 
         // Initial fetch
-        fetchMapData(map.getBounds(), Math.floor(map.getZoom()), true);
+        fetchForCurrentViewport();
         didInitialFetchRef.current = true;
       });
 
       return () => map.remove(); // Clean up on unmount
     }, []);
 
-    // Update crime points data when it changes
+    // Update crime points data when viewport changes (move or zoom)
     useEffect(() => {
       const map = mapRef.current;
       if (!map) return;
 
       const handleViewportChange = () => {
-        // Only fetch if the map is ready and initial fetch has been done
+        // Ignore if initial fetch not done or if programmatic fetch
         if (!didInitialFetchRef.current) return;
+        if (isProgrammaticFetchRef.current) return;
 
-        const bounds = map.getBounds();
+        // Determine current zoom mode
         const zoom = Math.floor(map.getZoom());
+        const nextMode = getMapMode(zoom);
 
-        fetchMapData(bounds, zoom);
+        // If mode changed, notify parent and update current mode
+        if (currentModeRef.current !== nextMode) {
+          currentModeRef.current = nextMode;
+          onModeChange?.(nextMode);
+        }
+
+        fetchForCurrentViewport();
       };
 
       map.on('moveend', handleViewportChange);
@@ -332,7 +404,23 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
         map.off('moveend', handleViewportChange);
         map.off('zoomend', handleViewportChange);
       };
-    }, []);
+    }, [fetchForCurrentViewport]);
+
+    // Date filter change effect
+    useEffect(() => {
+      crimePointCacheRef.current.clear(); // Clear cache when date filter changes
+
+      const map = mapRef.current;
+      if (!map || !mapReadyRef.current || !didInitialFetchRef.current) return;
+
+      const zoom = Math.floor(map.getZoom());
+
+      // Only refetch if we're in POINTS mode
+      if (getMapMode(zoom) !== 'POINTS') return;
+
+      const bounds = map.getBounds();
+      fetchMapData(bounds, zoom);
+    }, [dateFilter, fetchMapData]);
 
     // Clear highlights when clear selection
     useEffect(() => {
