@@ -10,7 +10,7 @@ import MapCanvas from '~/components/MapCanvas/MapCanvas';
 import type { MapCanvasRef } from '~/components/MapCanvas/MapCanvas';
 import AddressSearchBar from '~/components/AddressSearchBar/AddressSerachBar';
 import CrimeFilter from '~/components/filter/CrimeFilter';
-import type { CrimeDateFilter } from '~/types/filters';
+import type { CrimeFilter as CrimeFilterModel } from '~/types/filters';
 import type { CrimeDetail, GridStat } from '~/types/crime';
 import type { MapDataType } from '~/types/map';
 
@@ -25,34 +25,41 @@ export default function Map() {
   // Selection state can be one of: no selection, crime selected, or grid cell selected
   type Selection =
     | { type: 'NONE' }
-    | { type: 'CRIME'; crimeId: number; gridId?: number }
+    | { type: 'CRIME'; crimeId: number; lat: number; lon: number }
     | { type: 'GRID'; gridId: number };
 
   const [selection, setSelection] = useState<Selection>({ type: 'NONE' });
   const [mapMode, setMapMode] = useState<MapDataType>('GRID');
 
-  // Store the raw date filter state
-  const [dateFilterState, setDateFilterState] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-  }>({
-    startDate: null,
-    endDate: null
+    // Store the raw date filter state
+  const [crimeFilter, setCrimeFilter] = useState<CrimeFilterModel>({
+    dateRange: {
+      startDate: null,
+      endDate: null,
+    },
+    category: null,
   });
 
   // Memoize the dateFilter object - only creates new object when dates actually change
-  const dateFilter = useMemo<CrimeDateFilter>(
+  const memoizedCrimeFilter = useMemo<CrimeFilterModel>(
     () => ({
-      startDate: dateFilterState.startDate,
-      endDate: dateFilterState.endDate
+      dateRange: {
+        startDate: crimeFilter.dateRange.startDate,
+        endDate: crimeFilter.dateRange.endDate,
+      },
+      category: crimeFilter.category,
     }),
-    [dateFilterState.startDate, dateFilterState.endDate]
+    [
+      crimeFilter.dateRange.startDate,
+      crimeFilter.dateRange.endDate,
+      crimeFilter.category,
+    ]
   );
 
   // Memoize the filter change handler
-  const handleFilterChange = useCallback((filters: { date: CrimeDateFilter }) => {
+  const handleFilterChange = useCallback((filters: { filter: CrimeFilterModel }) => {
     console.log('Map: Filter changed:', filters);
-    setDateFilterState(filters.date);
+    setCrimeFilter(filters.filter);
   }, []);
 
   const mapRef = useRef<MapCanvasRef>(null);
@@ -76,9 +83,9 @@ export default function Map() {
     queryKey: [
       'gridStats',
       selection.type === 'GRID'
-        ? selection.gridId
+        ? `grid:${selection.gridId}`
         : selection.type === 'CRIME'
-          ? selection.gridId
+          ? `point:${selection.lat},${selection.lon}`
           : null
     ],
 
@@ -86,19 +93,24 @@ export default function Map() {
       if (selection.type === 'GRID') {
         return getGridStatsById(selection.gridId);
       }
-      if (selection.type === 'CRIME' && selection.gridId != null) {
-        return getGridStatsById(selection.gridId);
+
+      if (selection.type === 'CRIME') {
+        return getGridStatsByPoint(selection.lat, selection.lon);
       }
-      throw new Error('Grid stats query called without gridId');
+
+      throw new Error('Grid stats query called without selection');
     },
 
-    enabled: selection.type === 'GRID' || (selection.type === 'CRIME' && selection.gridId != null),
-
+    enabled: selection.type !== 'NONE',
     staleTime: 1000 * 60 * 10
   });
 
-  function handleCrimeClick(crimeId: number, gridId?: number) {
-    setSelection({ type: 'CRIME', crimeId, gridId });
+  // Determine if grid stats panel should be open based on selection and data availability
+  const gridStats = gridStatsQuery.data ?? null;
+  const gridStatsOpen = gridStats !== null && selection.type !== 'NONE';
+
+  function handleCrimeClick(crimeId: number, lat: number, lon: number) {
+    setSelection({ type: 'CRIME', crimeId, lat, lon });
   }
 
   function handleGridClick(gridId: number) {
@@ -138,7 +150,7 @@ export default function Map() {
         }}
       />
 
-      {mapMode === 'POINTS' && <CrimeFilter value={dateFilter} onChange={handleFilterChange} />}
+      {mapMode === 'POINTS' && <CrimeFilter value={memoizedCrimeFilter} onChange={handleFilterChange} />}
 
       <MapCanvas
         ref={mapRef}
@@ -146,18 +158,13 @@ export default function Map() {
         onGridClick={handleGridClick}
         onModeChange={setMapMode}
         selectedCrimeId={selection.type === 'CRIME' ? selection.crimeId : null}
-        selectedGridId={
-          selection.type === 'GRID'
-            ? selection.gridId
-            : selection.type === 'CRIME'
-              ? (selection.gridId ?? null)
-              : null
-        }
-        dateFilter={dateFilter}
+        selectedGridId={selection.type === 'GRID' ? selection.gridId : null}
+        filter={memoizedCrimeFilter}
       />
 
       <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={selection.type === 'CRIME'} />
-      <GridStatsPanel stats={gridStatsQuery.data ?? null} open={selection.type === 'GRID'} />
+      <GridStatsPanel stats={gridStats}   open={gridStatsOpen} />
+      
       <ClosePanelsButton
         visible={selection.type === 'CRIME' || selection.type === 'GRID'}
         hasCrime={selection.type === 'CRIME'}

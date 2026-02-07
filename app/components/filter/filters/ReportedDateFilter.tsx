@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react';
-import type { CrimeDateFilter } from '~/types/filters';
+import type { CrimeDateRange } from '~/types/filters';
 
 type ReportedDateFilterProps = {
-  value: CrimeDateFilter;
-  onChange: (value: CrimeDateFilter) => void;
+  dateRange: CrimeDateRange;
+  onChange: (value: CrimeDateRange) => void;
 };
 
-export default function ReportedDateFilter({ value, onChange }: ReportedDateFilterProps) {
-  const { startDate, endDate } = value; // Destructure for easier access
-
-  useEffect(() => {
-    onChange({ startDate, endDate });
-  }, [startDate, endDate, onChange]);
+export default function ReportedDateFilter({ dateRange, onChange }: ReportedDateFilterProps) {
+  const { startDate, endDate } = dateRange; // Destructure for easier access
 
   return (
     <div className="flex items-center gap-2">

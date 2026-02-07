@@ -15,12 +15,11 @@ export async function getMapData(
     maxLon: params.maxLon.toString(),
     maxLat: params.maxLat.toString(),
     zoom: params.zoom.toString(),
-    startDate: params.startDate || '',
-    endDate: params.endDate || ''
   });
 
   if (params.startDate) search.set('startDate', params.startDate);
   if (params.endDate) search.set('endDate', params.endDate);
+  if (params.offenceCategory) search.set('category', params.offenceCategory);
 
   console.log('Fetching map data with params:', search.toString());
 

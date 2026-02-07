@@ -12,24 +12,24 @@ import type { FeatureCollection, Point } from 'geojson';
 import { CrimePointsCache } from './crimePointsCache';
 
 import { getMapData } from '~/services/mapApi';
-import type { CrimeDateFilter } from '~/types/filters';
+import type { CrimeFilter } from '~/types/filters';
 
 export type MapCanvasRef = {
   flyTo: (lat: number, lon: number, zoom?: number) => void;
 };
 
 type MapCanvasProps = {
-  onCrimeClick: (id: number, lat: number, lon: number) => void;
+  onCrimeClick: (crimeId: number, lat: number, lon: number) => void;
   onGridClick: (gridId: number, lat: number, lon: number) => void;
   selectedCrimeId: number | null;
   selectedGridId: number | null;
-  dateFilter?: CrimeDateFilter;
+  filter?: CrimeFilter;
   onModeChange?: (mode: MapDataType) => void;
 };
 
 const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
   (
-    { onCrimeClick, onGridClick, selectedCrimeId, selectedGridId, dateFilter, onModeChange },
+    { onCrimeClick, onGridClick, selectedCrimeId, selectedGridId, filter, onModeChange },
     ref
   ) => {
     const GRID_COLOURS = {
@@ -84,7 +84,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
         // ---------- POINTS CACHE SHORT-CIRCUIT ----------
         if (mode === 'POINTS') {
-          const cacheKey = crimePointCacheRef.current.makeKey(bounds, zoom);
+          const cacheKey = crimePointCacheRef.current.makeKey(bounds, zoom, filter);
 
           if (cache.has(cacheKey)) {
             const cached = cache.get(cacheKey)!;
@@ -109,8 +109,10 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           zoom
         };
 
-        if (dateFilter?.startDate) params.startDate = dateFilter.startDate;
-        if (dateFilter?.endDate) params.endDate = dateFilter.endDate;
+        // Exctract filters
+        if (filter?.dateRange.startDate) params.startDate = filter.dateRange.startDate;
+        if (filter?.dateRange.endDate) params.endDate = filter.dateRange.endDate;
+        if (filter?.category) params.offenceCategory = filter.category;
 
         const response = await getMapData(params);
 
@@ -118,7 +120,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
         // ---------- HANDLE RESPONSE ----------
         if (response.type === 'POINTS') {
-          const cacheKey = cache.makeKey(bounds, zoom);
+          const cacheKey = cache.makeKey(bounds, zoom, filter); // Create cache key for this request
           const geojson = crimePointsToGeoJSON(response.data);
 
           cache.set(cacheKey, geojson); // Write to cache
@@ -142,7 +144,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           map.setLayoutProperty('crime-point-layer', 'visibility', 'none');
         }
       },
-      [dateFilter]
+      [filter]
     );
 
     // Function to fetch map data for the current viewport
@@ -338,7 +340,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
           const crimeId = feature.properties!.id;
           const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
-          onCrimeClick(feature.properties!.id, lat, lon);
+          onCrimeClick(crimeId, lat, lon);
 
           // Highlight crime
           map.setFilter('crime-point-highlight', ['==', ['get', 'id'], crimeId]);
@@ -353,6 +355,9 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           const feature = e.features[0];
           if (!feature) return;
           if (!feature.id) return;
+
+          console.log('Grid feature:', feature);
+
 
           const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
           onGridClick(feature.id as number, lat, lon);
@@ -406,9 +411,9 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
       };
     }, [fetchForCurrentViewport]);
 
-    // Date filter change effect
+    // Filter change effect
     useEffect(() => {
-      crimePointCacheRef.current.clear(); // Clear cache when date filter changes
+      crimePointCacheRef.current.clear(); // Clear cache when filter changes
 
       const map = mapRef.current;
       if (!map || !mapReadyRef.current || !didInitialFetchRef.current) return;
@@ -420,7 +425,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
       const bounds = map.getBounds();
       fetchMapData(bounds, zoom);
-    }, [dateFilter, fetchMapData]);
+    }, [filter, fetchMapData]);
 
     // Clear highlights when clear selection
     useEffect(() => {

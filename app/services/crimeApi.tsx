@@ -31,8 +31,8 @@ export async function getGridStatsByPoint(
   signal?: AbortSignal
 ): Promise<GridStat> {
   const search = new URLSearchParams({
-    lat: lat.toString(),
-    lon: lon.toString()
+    lon: lon.toString(),
+    lat: lat.toString()
   });
 
   const res = await fetch(`${API_BASE_URL}/crime/grid/stats?${search}`, { signal });

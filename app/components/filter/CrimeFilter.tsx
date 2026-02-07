@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import ReportedDateFilter from './filters/ReportedDateFilter';
-import type { CrimeDateFilter } from '~/types/filters';
+import type { CrimeFilter } from '~/types/filters';
+import OffenceCategoryFilter from './filters/OffenceCategoryFilter';
 
 type CrimeFilterProps = {
-  value: CrimeDateFilter;
-  onChange: (filters: { date: CrimeDateFilter }) => void;
+  value: CrimeFilter;
+  onChange: (filters: { filter: CrimeFilter }) => void;
 };
 
 export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
@@ -51,9 +52,11 @@ export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
             rounded-xl
             px-3
             py-2
+            space-y-4
             shadow-lg
           ">
-          <ReportedDateFilter value={value} onChange={(date) => onChange({ date: date })} />
+          <ReportedDateFilter dateRange={value.dateRange} onChange={(dateRange) => onChange({ filter: { ...value, dateRange } })} />
+          <OffenceCategoryFilter category={value.category} onChange={(category) => onChange({ filter: { ...value, category } })} />
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ export interface MapDataRequestParams {
 
   startDate?: string; // ISO date: YYYY-MM-DD
   endDate?: string; // ISO date: YYYY-MM-DD
+  offenceCategory?: string; // e.g. "Arson", "Assaults", etc.
 }
 
 export type MapDataType = 'GRID' | 'POINTS';

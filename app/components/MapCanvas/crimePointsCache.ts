@@ -1,5 +1,6 @@
 import type { FeatureCollection, Point } from 'geojson';
 import type maplibregl from 'maplibre-gl';
+import type { CrimeFilter } from '~/types/filters';
 
 export type CrimePointsCacheKey = string;
 
@@ -9,11 +10,15 @@ export class CrimePointsCache {
 
   constructor(private readonly tileSize: number) {}
 
-  makeKey(bounds: maplibregl.LngLatBounds, zoom: number): CrimePointsCacheKey {
+  makeKey(bounds: maplibregl.LngLatBounds, zoom: number, filter?: CrimeFilter): CrimePointsCacheKey {
     const center = bounds.getCenter();
     const tileX = Math.floor(center.lng / this.tileSize);
     const tileY = Math.floor(center.lat / this.tileSize);
-    return `z:${zoom}|x:${tileX}|y:${tileY}`;
+    const startDate = filter?.dateRange.startDate ?? 'NONE';
+    const endDate = filter?.dateRange.endDate ?? 'NONE';
+    const category = filter?.category ?? 'ALL';
+
+    return `z:${zoom}|x:${tileX}|y:${tileY}|sd:${startDate}|ed:${endDate}|cat:${category}`;
   }
 
   get(key: CrimePointsCacheKey) {
