@@ -1,6 +1,7 @@
 {
   "name": "ottawa-crime-lens-frontend",
   "compatibility_date": "2026-02-08",
+  "compatibility_flags": ["nodejs_compat"], // Enable Node.js compatibility mode
   "main": "build/server/index.js",
   "assets": {
     "directory": "build/client"
