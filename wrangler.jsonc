@@ -1,0 +1,8 @@
+{
+  "name": "ottawa-crime-lens-frontend",
+  "compatibility_date": "2026-02-08",
+  "main": "build/server/index.js",
+  "assets": {
+    "directory": "build/client"
+  }
+}
