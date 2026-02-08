@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
-    "deploy": "npx wrangler deploy"
+    "deploy": "echo \"Deploy handled by Cloudflare Pages\""
   },
   "dependencies": {
     "@react-router/node": "7.12.0",
