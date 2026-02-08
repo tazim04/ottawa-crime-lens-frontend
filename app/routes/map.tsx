@@ -16,7 +16,7 @@ import type { MapDataType } from '~/types/map';
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: 'Map page for Ottawa CrimeLens' },
+    { title: 'Ottawa CrimeLens' },
     { name: 'description', content: 'Explore crime data visualized on a map of Ottawa.' }
   ];
 }
