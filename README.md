@@ -69,7 +69,7 @@ The application will be available at `http://localhost:5173` (or the port specif
 
 This frontend connects to the CrimeLens backend API. Ensure the backend is running and accessible at the URL specified in your `.env` file.
 
-Backend repository: [Add link to backend repo if available]
+Backend repository: [https://github.com/tazim04/Ottawa-Crime-Lens-Query]
 
 ## Features in Detail
 
