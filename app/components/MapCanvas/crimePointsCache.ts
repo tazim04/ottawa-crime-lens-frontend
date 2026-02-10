@@ -10,7 +10,11 @@ export class CrimePointsCache {
 
   constructor(private readonly tileSize: number) {}
 
-  makeKey(bounds: maplibregl.LngLatBounds, zoom: number, filter?: CrimeFilter): CrimePointsCacheKey {
+  makeKey(
+    bounds: maplibregl.LngLatBounds,
+    zoom: number,
+    filter?: CrimeFilter
+  ): CrimePointsCacheKey {
     const center = bounds.getCenter();
     const tileX = Math.floor(center.lng / this.tileSize);
     const tileY = Math.floor(center.lat / this.tileSize);

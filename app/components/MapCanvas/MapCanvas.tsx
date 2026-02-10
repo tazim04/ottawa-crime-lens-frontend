@@ -28,10 +28,7 @@ type MapCanvasProps = {
 };
 
 const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
-  (
-    { onCrimeClick, onGridClick, selectedCrimeId, selectedGridId, filter, onModeChange },
-    ref
-  ) => {
+  ({ onCrimeClick, onGridClick, selectedCrimeId, selectedGridId, filter, onModeChange }, ref) => {
     const GRID_COLOURS = {
       veryLow: '#052e16',
       low: '#22c55e',
@@ -357,7 +354,6 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           if (!feature.id) return;
 
           console.log('Grid feature:', feature);
-
 
           const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
           onGridClick(feature.id as number, lat, lon);

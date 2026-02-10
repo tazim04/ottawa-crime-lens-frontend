@@ -11,13 +11,13 @@ export enum OffenceCategory {
   Theft5000AndUnder = 'Theft $5000 and Under',
   TheftOver5000 = 'Theft Over $5000',
   TheftOfMotorVehicle = 'Theft of Motor Vehicle',
-  UtteringThreats = 'Uttering Threats',
+  UtteringThreats = 'Uttering Threats'
 }
 
 export type CrimeDateRange = {
   startDate: string | null; // ISO yyyy-mm-dd
   endDate: string | null;
-}
+};
 
 export type CrimeFilter = {
   dateRange: CrimeDateRange;

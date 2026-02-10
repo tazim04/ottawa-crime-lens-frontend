@@ -5,24 +5,15 @@ type OffenceCategoryFilterProps = {
   onChange: (value: OffenceCategory | null) => void;
 };
 
-export default function OffenceCategoryFilter({
-  category,
-  onChange,
-}: OffenceCategoryFilterProps) {
+export default function OffenceCategoryFilter({ category, onChange }: OffenceCategoryFilterProps) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-neutral-400 whitespace-nowrap">
-        Offence Category
-      </span>
+      <span className="text-xs text-neutral-400 whitespace-nowrap">Offence Category</span>
 
       <select
         value={category ?? ''}
         onChange={(e) =>
-          onChange(
-            e.target.value === ''
-              ? null
-              : (e.target.value as OffenceCategory)
-          )
+          onChange(e.target.value === '' ? null : (e.target.value as OffenceCategory))
         }
         className="
           h-7
@@ -34,8 +25,7 @@ export default function OffenceCategoryFilter({
           focus:outline-none
           focus:ring-1
           focus:ring-emerald-500
-        "
-      >
+        ">
         <option value="">All</option>
 
         {Object.values(OffenceCategory).map((cat) => (
@@ -58,8 +48,7 @@ export default function OffenceCategoryFilter({
             hover:text-neutral-200
             hover:bg-white/5
             transition
-          "
-        >
+          ">
           ✕
         </button>
       )}

@@ -55,8 +55,14 @@ export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
             space-y-4
             shadow-lg
           ">
-          <ReportedDateFilter dateRange={value.dateRange} onChange={(dateRange) => onChange({ filter: { ...value, dateRange } })} />
-          <OffenceCategoryFilter category={value.category} onChange={(category) => onChange({ filter: { ...value, category } })} />
+          <ReportedDateFilter
+            dateRange={value.dateRange}
+            onChange={(dateRange) => onChange({ filter: { ...value, dateRange } })}
+          />
+          <OffenceCategoryFilter
+            category={value.category}
+            onChange={(category) => onChange({ filter: { ...value, category } })}
+          />
         </div>
       )}
     </div>

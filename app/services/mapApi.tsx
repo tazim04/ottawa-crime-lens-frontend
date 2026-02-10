@@ -14,7 +14,7 @@ export async function getMapData(
     minLat: params.minLat.toString(),
     maxLon: params.maxLon.toString(),
     maxLat: params.maxLat.toString(),
-    zoom: params.zoom.toString(),
+    zoom: params.zoom.toString()
   });
 
   if (params.startDate) search.set('startDate', params.startDate);

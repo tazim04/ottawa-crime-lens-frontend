@@ -31,13 +31,13 @@ export default function Map() {
   const [selection, setSelection] = useState<Selection>({ type: 'NONE' });
   const [mapMode, setMapMode] = useState<MapDataType>('GRID');
 
-    // Store the raw date filter state
+  // Store the raw date filter state
   const [crimeFilter, setCrimeFilter] = useState<CrimeFilterModel>({
     dateRange: {
       startDate: null,
-      endDate: null,
+      endDate: null
     },
-    category: null,
+    category: null
   });
 
   // Memoize the dateFilter object - only creates new object when dates actually change
@@ -45,15 +45,11 @@ export default function Map() {
     () => ({
       dateRange: {
         startDate: crimeFilter.dateRange.startDate,
-        endDate: crimeFilter.dateRange.endDate,
+        endDate: crimeFilter.dateRange.endDate
       },
-      category: crimeFilter.category,
+      category: crimeFilter.category
     }),
-    [
-      crimeFilter.dateRange.startDate,
-      crimeFilter.dateRange.endDate,
-      crimeFilter.category,
-    ]
+    [crimeFilter.dateRange.startDate, crimeFilter.dateRange.endDate, crimeFilter.category]
   );
 
   // Memoize the filter change handler
@@ -123,7 +119,7 @@ export default function Map() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <div className="absolute top-4 left-5 z-50 font-mono">
+      <div className="absolute top-4 left-4 z-50 font-mono">
         <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
         <a
           className="text-stone-400"
@@ -139,6 +135,17 @@ export default function Map() {
         <SourceCodeDropdown />
       </div>
 
+      <div className="text-stone-500 text-xs absolute bottom-2 left-4 z-50">
+          Flaticon by{' '}
+          <a
+            href="https://www.flaticon.com/authors/arkinasi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-stone-300">
+            Arkinasi
+          </a>{' '}
+        </div>
+
       <AddressSearchBar
         onSelect={async (lat, lon) => {
           mapRef.current?.flyTo(lat, lon, 14);
@@ -150,7 +157,9 @@ export default function Map() {
         }}
       />
 
-      {mapMode === 'POINTS' && <CrimeFilter value={memoizedCrimeFilter} onChange={handleFilterChange} />}
+      {mapMode === 'POINTS' && (
+        <CrimeFilter value={memoizedCrimeFilter} onChange={handleFilterChange} />
+      )}
 
       <MapCanvas
         ref={mapRef}
@@ -163,8 +172,8 @@ export default function Map() {
       />
 
       <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={selection.type === 'CRIME'} />
-      <GridStatsPanel stats={gridStats}   open={gridStatsOpen} />
-      
+      <GridStatsPanel stats={gridStats} open={gridStatsOpen} />
+
       <ClosePanelsButton
         visible={selection.type === 'CRIME' || selection.type === 'GRID'}
         hasCrime={selection.type === 'CRIME'}
