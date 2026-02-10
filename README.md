@@ -1,87 +1,101 @@
-# Welcome to React Router!
+# CrimeLens Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+A modern web application for visualizing and analyzing crime data in Ottawa, built with React Router/Remix.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Overview
+
+CrimeLens provides an interactive platform for exploring crime statistics and trends in Ottawa. The application offers data visualization, filtering capabilities, and geographic mapping to help users better understand crime patterns in their community.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- **Interactive Crime Map**: Visualize crime incidents on an interactive map of Ottawa
+- **Data Filtering**: Filter crime data by type, date range, location, and other parameters
+- **Statistical Analysis**: View trends and analytics on crime patterns
+- **Responsive Design**: Optimized for desktop and mobile devices
+- **Real-time Data**: Access to up-to-date crime statistics
 
-## Getting Started
+## Tech Stack
 
-### Installation
+- **Framework**: React Router / Remix
+- **Language**: TypeScript
+- **Styling**: CSS/Tailwind CSS
+- **Maps**: Maplibre
 
-Install the dependencies:
+## Prerequisites
 
+Before you begin, ensure you have the following installed:
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Git
+
+## Installation
+
+1. Clone the repository:
 ```bash
-npm install
+git clone https://github.com/tazim04/ottawa-crime-lens-frontend.git
+cd ottawa-crime-lens-frontend
 ```
 
-### Development
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
 
-Start the development server with HMR:
+## Development
+
+Start the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The application will be available at `http://localhost:5173` (or the port specified in your configuration).
 
-## Building for Production
+## Available Scripts
 
-Create a production build:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run format` - Run formatter
+- `npm run typecheck` - Run TypeScript type checking
 
-```bash
-npm run build
-```
+## API Integration
 
-## Deployment
+This frontend connects to the CrimeLens backend API. Ensure the backend is running and accessible at the URL specified in your `.env` file.
 
-### Docker Deployment
+Backend repository: [Add link to backend repo if available]
 
-To build and run using Docker:
+## Features in Detail
 
-```bash
-docker build -t my-app .
+### Crime Map
+- Interactive map showing crime incident locations
+- Cluster markers for areas with high crime density
+- Click on markers to view incident details
+- Filter crimes by type and date
 
-# Run the container
-docker run -p 3000:3000 my-app
-```
+### Analytics Dashboard
+- Crime trends over time
+- Geographic heat maps
+- Statistical summaries
 
-The containerized application can be deployed to any platform that supports Docker, including:
+### Search & Filter
+- Search by address or neighborhood
+- Filter by crime category
+- Date range selection
+- Export filtered data
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+## Acknowledgments
 
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- Crime data provided by Ottawa Police Service
+- Map data © OpenStreetMap contributors
+- Built with React Router/Remix
 
 ---
 
-Built with ❤️ using React Router.
+Made with ❤️ for the Ottawa community
