@@ -98,7 +98,7 @@ export default function AddressSearchBar({
   }, [query]);
 
   return (
-    <div className="absolute top-4 left-1/2 z-50 w-[40vw] -translate-x-1/2 font-mono">
+    <div className="absolute top-4 left-1/2 z-50 md:w-[40vw] w-11/12 -translate-x-1/2 font-mono">
       {/* Search container */}
       <div
         className="

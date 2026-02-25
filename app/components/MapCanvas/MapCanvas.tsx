@@ -246,15 +246,10 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
               GRID_COLOURS.extreme // critical
             ],
 
-            // Solid, confident presence
             'circle-opacity': 0.9,
 
-            // NO blur — sharp edges
-            'circle-blur': 0,
-
-            // Optional: subtle stroke for clarity
-            'circle-stroke-width': 1,
-            'circle-stroke-color': '#000000'
+            // NO blur - sharp edges
+            'circle-blur': 0
           }
         });
 

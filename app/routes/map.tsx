@@ -119,7 +119,8 @@ export default function Map() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <div className="absolute top-4 left-4 z-50 font-mono">
+      {/* Desktop */}
+      <div className="hidden md:block absolute top-4 left-4 z-50 font-mono">
         <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
         <a
           className="text-stone-400"
@@ -135,16 +136,31 @@ export default function Map() {
         <SourceCodeDropdown />
       </div>
 
-      <div className="text-stone-500 text-xs absolute bottom-2 left-4 z-50">
-          Flaticon by{' '}
-          <a
-            href="https://www.flaticon.com/authors/arkinasi"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-stone-300">
-            Arkinasi
-          </a>{' '}
-        </div>
+      {/* Mobile */}
+      <div className="md:hidden absolute bottom-3 left-3 z-50 font-mono bg-white/6 backdrop-blur px-3 py-2 rounded-xl">
+        <h1 className="text-stone-200 font-semibold text-sm leading-tight">Ottawa CrimeLens</h1>
+
+        <a
+          className="text-stone-400 text-xs"
+          href="https://tazim04.github.io/personal-website/"
+          target="_blank"
+          rel="noopener noreferrer">
+          By <span className="underline underline-offset-2 hover:text-white">Tazim Khan</span>
+        </a>
+        <br />
+        <SourceCodeDropdown mobile />
+      </div>
+
+      {/* <div className="text-stone-500 text-xs absolute bottom-2 left-4 z-50">
+        Flaticon by{' '}
+        <a
+          href="https://www.flaticon.com/authors/arkinasi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-stone-300">
+          Arkinasi
+        </a>{' '}
+      </div> */}
 
       <AddressSearchBar
         onSelect={async (lat, lon) => {

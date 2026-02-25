@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function SourceCodeDropdown() {
+type Props = {
+  mobile?: boolean;
+};
+
+export default function SourceCodeDropdown({ mobile }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -17,7 +21,7 @@ export default function SourceCodeDropdown() {
   }, []);
 
   return (
-    <div ref={ref} className="relative inline-block text-sm">
+    <div ref={ref} className="relative inline-flex md:text-base text-xs">
       <button
         onClick={() => setOpen((v) => !v)}
         className="text-stone-400 hover:text-stone-200 transition-colors hover:cursor-pointer underline underline-offset-4">
@@ -25,7 +29,11 @@ export default function SourceCodeDropdown() {
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-2 w-40 rounded-md shadow-lg space-y-1">
+        <div
+          className={`
+            absolute rounded-md -top-11 shadow-lg space-y-1 bg-neutral-900/70 backdrop-blur-md p-2
+            ${mobile ? 'left-34 w-20 mb-20' : 'mt-2 left-0 w-40'}
+          `}>
           <a
             href="https://github.com/tazim04/ottawa-crime-lens-frontend"
             target="_blank"

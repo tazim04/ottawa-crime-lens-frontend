@@ -32,12 +32,14 @@ Before you begin, ensure you have the following installed:
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/tazim04/ottawa-crime-lens-frontend.git
 cd ottawa-crime-lens-frontend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -74,17 +76,20 @@ Backend repository: [https://github.com/tazim04/Ottawa-Crime-Lens-Query]
 ## Features in Detail
 
 ### Crime Map
+
 - Interactive map showing crime incident locations
 - Cluster markers for areas with high crime density
 - Click on markers to view incident details
 - Filter crimes by type and date
 
 ### Analytics Dashboard
+
 - Crime trends over time
 - Geographic heat maps
 - Statistical summaries
 
 ### Search & Filter
+
 - Search by address or neighborhood
 - Filter by crime category
 - Date range selection
