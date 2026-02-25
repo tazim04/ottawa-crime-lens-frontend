@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import type { Route } from './+types/map';
 import CrimeDetailsPanel from '~/components/panels/CrimeDetailsPanel/CrimeDetailsPanel';
 import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
@@ -13,6 +13,7 @@ import CrimeFilter from '~/components/filter/CrimeFilter';
 import type { CrimeFilter as CrimeFilterModel } from '~/types/filters';
 import type { CrimeDetail, GridStat } from '~/types/crime';
 import type { MapDataType } from '~/types/map';
+import { MobileBottomSheet } from '~/components/panels/MobileBottomSheet';
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -119,7 +120,7 @@ export default function Map() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      {/* Desktop */}
+      {/* Title and Source - Desktop */}
       <div className="hidden md:block absolute top-4 left-4 z-50 font-mono">
         <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
         <a
@@ -136,7 +137,7 @@ export default function Map() {
         <SourceCodeDropdown />
       </div>
 
-      {/* Mobile */}
+      {/* Title and Source - Mobile */}
       <div className="md:hidden absolute bottom-3 left-3 z-50 font-mono bg-white/6 backdrop-blur px-3 py-2 rounded-xl">
         <h1 className="text-stone-200 font-semibold text-sm leading-tight">Ottawa CrimeLens</h1>
 
@@ -187,14 +188,23 @@ export default function Map() {
         filter={memoizedCrimeFilter}
       />
 
-      <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={selection.type === 'CRIME'} />
-      <GridStatsPanel stats={gridStats} open={gridStatsOpen} />
+      <div className="hidden md:block">
+        <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={selection.type === 'CRIME'} />
+        <GridStatsPanel stats={gridStats} open={gridStatsOpen} />
+        <ClosePanelsButton
+          visible={selection.type === 'CRIME' || selection.type === 'GRID'}
+          hasCrime={selection.type === 'CRIME'}
+          hasGrid={selection.type === 'GRID'}
+          onClear={clearSelection}
+        />
+      </div>
 
-      <ClosePanelsButton
-        visible={selection.type === 'CRIME' || selection.type === 'GRID'}
-        hasCrime={selection.type === 'CRIME'}
-        hasGrid={selection.type === 'GRID'}
-        onClear={clearSelection}
+      <MobileBottomSheet
+        crime={crimeQuery.data ?? null}
+        grid={gridStats}
+        selectionType={selection.type}
+        open={selection.type !== 'NONE'}
+        onClose={clearSelection}
       />
     </div>
   );

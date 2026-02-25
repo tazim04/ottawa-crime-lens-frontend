@@ -105,7 +105,7 @@ export default function AddressSearchBar({
         rounded-xl
         bg-white/6
         border border-white/20
-        backdrop-blur
+        backdrop-blur-lg
         shadow-lg
       ">
         <input

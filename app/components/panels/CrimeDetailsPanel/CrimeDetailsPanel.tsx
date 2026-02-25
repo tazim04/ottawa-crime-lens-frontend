@@ -5,22 +5,20 @@ import PanelSection from '../PanelSection';
 type CrimeDetailsPanelProps = {
   crime: CrimeDetail | null;
   open: boolean;
+  embedded?: boolean;
 };
 
-export default function CrimeDetailsPanel({ crime, open }: CrimeDetailsPanelProps) {
+export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetailsPanelProps) {
   return (
     <aside
       className={`
-    fixed right-3 top-4 z-50
-    w-95 h-[48vh]
-    rounded-2xl
-    bg-neutral-900/95 backdrop-blur
-    border border-white/10
-    text-white
-    shadow-2xl
-    transform transition-transform duration-300 ease-out
-    ${open ? 'translate-x-0' : 'translate-x-105'}
-  `}>
+        ${embedded ? 'w-full relative' : 'fixed right-3 bottom-10 w-95 h-[47vh]'}
+        ${embedded ? '' : 'rounded-2xl shadow-2xl'}
+        ${embedded ? '' : 'bg-neutral-900/95 border border-white/10 backdrop-blur'}
+        text-white
+        transform transition-transform duration-300 ease-out
+        ${embedded ? '' : open ? 'translate-x-0' : 'translate-x-105'}
+      `}>
       {crime && (
         <div className="flex h-full flex-col">
           {/* ===== Header ===== */}

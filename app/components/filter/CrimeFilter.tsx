@@ -23,24 +23,49 @@ export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
         items-center
         gap-2
       ">
-      {/* Toggle button */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="
+      {/* Filter button */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="
+          flex
           h-8
           px-3
           rounded-lg
           bg-white/10
           border border-white/20
-          backdrop-blur
+          backdrop-blur-xl
           text-xs
           text-neutral-200
-          flex items-center gap-1
+          items-center gap-1
           hover:bg-white/15
           transition
         ">
-        {open ? '✕' : 'Open Filters'}
-      </button>
+          Open Filters
+        </button>
+      )}
+
+      {/* Close button (only for desktop) */}
+      {open && (
+        <button
+          onClick={() => setOpen(false)}
+          className="
+          hidden md:flex
+          h-8
+          px-3
+          rounded-lg
+          bg-white/10
+          border border-white/20
+          backdrop-blur-xl
+          text-xs
+          text-neutral-200
+          items-center gap-1
+          hover:bg-white/15
+          transition
+        ">
+          ✕
+        </button>
+      )}
 
       {/* Filters panel */}
       {open && (
@@ -48,7 +73,7 @@ export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
           className="
             bg-white/6
             border border-white/20
-            backdrop-blur
+            backdrop-blur-xl
             rounded-xl
             px-3
             py-2
@@ -63,6 +88,24 @@ export default function CrimeFilter({ value, onChange }: CrimeFilterProps) {
             category={value.category}
             onChange={(category) => onChange({ filter: { ...value, category } })}
           />
+
+          {/* Mobile close button UNDER filters */}
+          <button
+            onClick={() => setOpen(false)}
+            className="
+              md:hidden
+              w-full
+              h-10
+              rounded-lg
+              bg-white/10
+              border border-white/20
+              text-sm
+              text-neutral-200
+              hover:bg-white/15
+              transition
+            ">
+            Close
+          </button>
         </div>
       )}
     </div>
