@@ -38,7 +38,7 @@ export function MobileBottomSheet({
           <div className="h-1.5 w-10 rounded-full bg-neutral-600/60" />
         </div>
 
-        <div className="p-5 overflow-y-auto space-y-5 h-full">
+        <div className="px-5 pb-5 overflow-y-auto space-y-5 h-full">
           <CrimeDetailsPanel crime={crime} open={selectionType === 'CRIME'} embedded />
           <GridStatsPanel stats={grid} open={selectionType === 'GRID'} embedded />
         </div>

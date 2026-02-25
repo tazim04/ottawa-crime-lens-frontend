@@ -12,7 +12,7 @@ export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetail
   return (
     <aside
       className={`
-        ${embedded ? 'w-full relative' : 'fixed right-3 bottom-10 w-95 h-[47vh]'}
+        ${embedded ? 'w-full relative' : 'fixed 2xl:right-3 right-1 top-3 2xl:w-95 md:w-90 2xl:h-[47.5vh] md:h-[46vh]'}
         ${embedded ? '' : 'rounded-2xl shadow-2xl'}
         ${embedded ? '' : 'bg-neutral-900/95 border border-white/10 backdrop-blur'}
         text-white
@@ -28,7 +28,7 @@ export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetail
           </div>
 
           {/* ===== Scrollable body ===== */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
             {/* Summary */}
             <PanelSection title="Offence">
               <InfoRow label="Category" value={crime.offenceCategory} />

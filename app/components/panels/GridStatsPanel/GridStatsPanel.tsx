@@ -12,7 +12,7 @@ export default function GridStatsPanel({ stats, open, embedded }: GridStatsPanel
   return (
     <aside
       className={`
-        ${embedded ? 'w-full relative' : 'fixed right-3 bottom-10 w-95 h-[47vh]'}
+        ${embedded ? 'w-full relative' : 'fixed 2xl:right-3 right-1 bottom-10 2xl:w-95 md:w-90 h-[48vh]'}
         ${embedded ? '' : 'rounded-2xl shadow-2xl'}
         ${embedded ? '' : 'bg-neutral-900/95 border border-white/10 backdrop-blur'}
         text-white
@@ -23,12 +23,12 @@ export default function GridStatsPanel({ stats, open, embedded }: GridStatsPanel
         {stats && (
           <>
             {/* Header */}
-            <div>
+            <div className='ps-5 pt-5'>
               <h3 className="text-lg font-semibold tracking-wide">Area Crime Statistics</h3>
               <div className="mt-1 h-px w-14 bg-cyan-500/60" />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
               {/* Core numbers */}
               <div className="space-y-2">
                 <p className="text-xs uppercase tracking-wide text-neutral-500">

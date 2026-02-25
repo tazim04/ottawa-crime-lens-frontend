@@ -103,7 +103,7 @@ export default function AddressSearchBar({
       <div
         className="
         rounded-xl
-        bg-white/6
+        bg-white/3
         border border-white/20
         backdrop-blur-lg
         shadow-lg

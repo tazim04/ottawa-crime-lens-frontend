@@ -138,7 +138,7 @@ export default function Map() {
       </div>
 
       {/* Title and Source - Mobile */}
-      <div className="md:hidden absolute bottom-3 left-3 z-50 font-mono bg-white/6 backdrop-blur px-3 py-2 rounded-xl">
+      <div className="md:hidden absolute bottom-2 left-2 z-50 font-mono bg-black/50 backdrop-blur px-3 py-2 rounded-xl">
         <h1 className="text-stone-200 font-semibold text-sm leading-tight">Ottawa CrimeLens</h1>
 
         <a
@@ -152,7 +152,7 @@ export default function Map() {
         <SourceCodeDropdown mobile />
       </div>
 
-      {/* <div className="text-stone-500 text-xs absolute bottom-2 left-4 z-50">
+      <div className="text-stone-500 text-xs absolute bottom-2 md:left-4 right-11 z-50">
         Flaticon by{' '}
         <a
           href="https://www.flaticon.com/authors/arkinasi"
@@ -161,7 +161,7 @@ export default function Map() {
           className="underline hover:text-stone-300">
           Arkinasi
         </a>{' '}
-      </div> */}
+      </div>
 
       <AddressSearchBar
         onSelect={async (lat, lon) => {
@@ -188,6 +188,7 @@ export default function Map() {
         filter={memoizedCrimeFilter}
       />
 
+      {/* Panels on desktop */}
       <div className="hidden md:block">
         <CrimeDetailsPanel crime={crimeQuery.data ?? null} open={selection.type === 'CRIME'} />
         <GridStatsPanel stats={gridStats} open={gridStatsOpen} />

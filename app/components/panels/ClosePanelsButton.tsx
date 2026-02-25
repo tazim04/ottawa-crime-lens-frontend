@@ -6,20 +6,6 @@ type ClosePanelsButtonProps = {
 };
 
 export function ClosePanelsButton({ visible, hasCrime, hasGrid, onClear }: ClosePanelsButtonProps) {
-  const positionClass = (() => {
-    // Crime panel open
-    if (hasCrime) {
-      return 'top-[1.8vh] right-[25rem]';
-    }
-
-    // Only grid stats open
-    if (hasGrid) {
-      return 'top-[50vh] right-[25rem]';
-    }
-
-    return '';
-  })();
-
   return (
     <button
       onClick={onClear}
@@ -28,7 +14,11 @@ export function ClosePanelsButton({ visible, hasCrime, hasGrid, onClear }: Close
         fixed
         z-10
 
-        ${positionClass}
+        ${hasGrid ? '2xl:top-[50vh] md:top-[48vh]' : ''}
+        ${hasCrime ? 'top-[1.8vh]' : ''}
+
+        2xl:right-100
+        md:right-92
 
         w-9 h-9
         rounded-full
