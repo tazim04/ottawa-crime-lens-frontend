@@ -23,7 +23,7 @@ export default function GridStatsPanel({ stats, open, embedded }: GridStatsPanel
         {stats && (
           <>
             {/* Header */}
-            <div className='ps-5 pt-5'>
+            <div className="ps-5 pt-5">
               <h3 className="text-lg font-semibold tracking-wide">Area Crime Statistics</h3>
               <div className="mt-1 h-px w-14 bg-cyan-500/60" />
             </div>
