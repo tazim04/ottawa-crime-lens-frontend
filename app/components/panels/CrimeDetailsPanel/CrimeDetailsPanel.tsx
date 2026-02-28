@@ -9,6 +9,23 @@ type CrimeDetailsPanelProps = {
 };
 
 export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetailsPanelProps) {
+
+  function formatHour(hour: number | string | null | undefined) {
+    if (!hour) return '-';
+
+    const hourStr = hour.toString().padStart(4, '0');
+    const hh = parseInt(hourStr.slice(0, 2), 10); // get the hour part, convert to int with base 10
+    const mm = hourStr.slice(2, 4); // get the minute part as string
+
+    // convert to 12-hour format
+    const period = hh >= 12 ? 'PM' : 'AM';
+    const hour12 = hh % 12 === 0 ? 12 : hh % 12;
+
+    return `${hour12}:${mm} ${period}`;
+  }
+
+
+
   return (
     <aside
       className={`
@@ -44,9 +61,9 @@ export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetail
             {/* Time */}
             <PanelSection title="Time">
               <InfoRow label="Occurred date" value={crime.occurredDate} />
-              <InfoRow label="Occurred hour" value={`${crime.occurredHour}:00`} />
+              <InfoRow label="Occurred hour" value={formatHour(crime.occurredHour)} />
               <InfoRow label="Reported date" value={crime.reportedDate} />
-              <InfoRow label="Reported hour" value={`${crime.reportedHour}:00`} />
+              <InfoRow label="Reported hour" value={formatHour(crime.reportedHour)} />
             </PanelSection>
 
             {/* Metadata */}
