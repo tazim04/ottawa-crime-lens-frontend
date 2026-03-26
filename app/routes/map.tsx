@@ -26,7 +26,7 @@ export default function Map() {
   // Selection state can be one of: no selection, crime selected, or grid cell selected
   type Selection =
     | { type: 'NONE' }
-    | { type: 'CRIME'; crimeId: number; lat: number; lon: number }
+    | { type: 'CRIME'; crimeId: number; gridId: number }
     | { type: 'GRID'; gridId: number };
 
   const [selection, setSelection] = useState<Selection>({ type: 'NONE' });
@@ -82,7 +82,7 @@ export default function Map() {
       selection.type === 'GRID'
         ? `grid:${selection.gridId}`
         : selection.type === 'CRIME'
-          ? `point:${selection.lat},${selection.lon}`
+          ? `point:${selection.gridId}`
           : null
     ],
 
@@ -92,7 +92,7 @@ export default function Map() {
       }
 
       if (selection.type === 'CRIME') {
-        return getGridStatsByPoint(selection.lat, selection.lon);
+        return getGridStatsByPoint(selection.gridId);
       }
 
       throw new Error('Grid stats query called without selection');
@@ -106,8 +106,8 @@ export default function Map() {
   const gridStats = gridStatsQuery.data ?? null;
   const gridStatsOpen = gridStats !== null && selection.type !== 'NONE';
 
-  function handleCrimeClick(crimeId: number, lat: number, lon: number) {
-    setSelection({ type: 'CRIME', crimeId, lat, lon });
+  function handleCrimeClick(crimeId: number, gridId: number) {
+    setSelection({ type: 'CRIME', crimeId, gridId });
   }
 
   function handleGridClick(gridId: number) {
@@ -168,11 +168,7 @@ export default function Map() {
       <AddressSearchBar
         onSelect={async (lat, lon) => {
           mapRef.current?.flyTo(lat, lon, 14);
-
-          const grid = await getGridStatsByPoint(lat, lon);
-          if (!grid.empty) {
-            setSelection({ type: 'GRID', gridId: grid.id });
-          }
+          clearSelection();
         }}
       />
 

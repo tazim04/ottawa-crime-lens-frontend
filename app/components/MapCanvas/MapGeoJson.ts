@@ -14,6 +14,7 @@ export function crimePointsToGeoJSON(points: CrimeMapPoint[]): FeatureCollection
       },
       properties: {
         id: p.id,
+        gridId: p.gridId,
         category: p.category,
         occurredDate: p.occurredDate
       }

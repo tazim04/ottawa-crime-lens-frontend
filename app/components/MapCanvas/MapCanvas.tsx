@@ -19,8 +19,8 @@ export type MapCanvasRef = {
 };
 
 type MapCanvasProps = {
-  onCrimeClick: (crimeId: number, lat: number, lon: number) => void;
-  onGridClick: (gridId: number, lat: number, lon: number) => void;
+  onCrimeClick: (crimeId: number, gridId: number) => void;
+  onGridClick: (gridId: number) => void;
   selectedCrimeId: number | null;
   selectedGridId: number | null;
   filter?: CrimeFilter;
@@ -331,8 +331,8 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           if (!feature) return;
 
           const crimeId = feature.properties!.id;
-          const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
-          onCrimeClick(crimeId, lat, lon);
+          const gridId = feature.properties!.gridId;
+          onCrimeClick(crimeId, gridId);
 
           // Highlight crime
           map.setFilter('crime-point-highlight', ['==', ['get', 'id'], crimeId]);
@@ -350,8 +350,7 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
 
           console.log('Grid feature:', feature);
 
-          const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
-          onGridClick(feature.id as number, lat, lon);
+          onGridClick(feature.id as number);
 
           // Highlight grid
           map.setFilter('crime-grid-highlight', ['==', ['id'], feature.id]);

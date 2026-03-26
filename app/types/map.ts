@@ -22,6 +22,7 @@ export interface GridCell {
 
 export interface CrimeMapPoint {
   id: number;
+  gridId: number;
   category: string;
   lat: number;
   lon: number;

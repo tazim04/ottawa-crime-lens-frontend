@@ -18,8 +18,16 @@ export type CrimeDetail = {
 };
 
 export type GridStatsRequestParams = {
-  lon: number;
-  lat: number;
+  gridId: number;
+};
+
+export type GridAnomaly = {
+  date: string;
+  anomalyScore: string | number;
+  modelVersion: string;
+  triagePercentile: string | number;
+  triageLabel: string;
+  triageExplanation: string;
 };
 
 export type GridStat = {
@@ -35,5 +43,6 @@ export type GridStat = {
   mostCommonCrimeLast10Years: string | null;
   firstReported: string | null; // ISO date (YYYY-MM-DD)
   lastReported: string | null; // ISO date (YYYY-MM-DD)
+  anomaly: GridAnomaly | null;
   empty: boolean;
 };

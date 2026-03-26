@@ -9,7 +9,6 @@ type CrimeDetailsPanelProps = {
 };
 
 export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetailsPanelProps) {
-
   function formatHour(hour: number | string | null | undefined) {
     if (!hour) return '-';
 
@@ -23,8 +22,6 @@ export default function CrimeDetailsPanel({ crime, open, embedded }: CrimeDetail
 
     return `${hour12}:${mm} ${period}`;
   }
-
-
 
   return (
     <aside
