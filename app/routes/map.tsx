@@ -5,7 +5,6 @@ import GridStatsPanel from '~/components/panels/GridStatsPanel/GridStatsPanel';
 import { getCrimeDetails, getGridStatsByPoint, getGridStatsById } from '~/services/crimeApi';
 import { ClosePanelsButton } from '~/components/panels/ClosePanelsButton';
 import { useQuery } from '@tanstack/react-query';
-import SourceCodeDropdown from '~/components/SourceCodeDropdown/SourceCodeDropdown';
 import MapCanvas from '~/components/MapCanvas/MapCanvas';
 import type { MapCanvasRef } from '~/components/MapCanvas/MapCanvas';
 import AddressSearchBar from '~/components/AddressSearchBar/AddressSerachBar';
@@ -21,6 +20,8 @@ export function meta(_: Route.MetaArgs) {
     { name: 'description', content: 'Explore crime data visualized on a map of Ottawa.' }
   ];
 }
+
+const SOURCE_CODE_REPO_URL = 'https://github.com/tazim04/ottawa-crime-lens-frontend';
 
 export default function Map() {
   // Selection state can be one of: no selection, crime selected, or grid cell selected
@@ -134,7 +135,13 @@ export default function Map() {
           </span>
         </a>
         <br />
-        <SourceCodeDropdown />
+        <a
+          className="text-stone-400 underline underline-offset-4 hover:text-stone-200"
+          href="https://github.com/tazim04/Ottawa-Crime-Lens"
+          target="_blank"
+          rel="noopener noreferrer">
+          Source Code
+        </a>
       </div>
 
       {/* Title and Source - Mobile */}
@@ -150,7 +157,13 @@ export default function Map() {
             By <span className="underline underline-offset-2 hover:text-white">Tazim Khan</span>
           </a>
 
-          <SourceCodeDropdown mobile />
+          <a
+            className="text-stone-400 text-xs inline-block underline underline-offset-2 hover:text-stone-200"
+            href={SOURCE_CODE_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer">
+            Source Code
+          </a>
 
           <div className="text-stone-500 text-xs mt-2">
             Flaticon by{' '}
