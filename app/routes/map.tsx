@@ -126,7 +126,7 @@ export default function Map() {
         <h1 className="text-stone-300 font-semibold text-2xl">Ottawa CrimeLens</h1>
         <a
           className="text-stone-400"
-          href="https://tazim04.github.io/personal-website/"
+          href="https://tazim04.github.io/"
           target="_blank"
           rel="noopener noreferrer">
           By{' '}
