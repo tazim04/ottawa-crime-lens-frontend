@@ -14,6 +14,8 @@ import { CrimePointsCache } from './crimePointsCache';
 import { getMapData } from '~/services/mapApi';
 import type { CrimeFilter } from '~/types/filters';
 
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY;
+
 export type MapCanvasRef = {
   flyTo: (lat: number, lon: number, zoom?: number) => void;
 };
@@ -169,7 +171,9 @@ const MapCanvas = forwardRef<MapCanvasRef, MapCanvasProps>(
           sources: {
             dark: {
               type: 'raster',
-              tiles: ['https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'], // OpenStreetMap tile server
+              tiles: [
+                `https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
+              ], // OpenStreetMap tile server
               tileSize: 256
             }
           },
